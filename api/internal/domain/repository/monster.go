@@ -10,6 +10,7 @@ import (
 
 type MonsterRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*entity.Monster, error)
+	FindAllIDs(ctx context.Context) ([]uuid.UUID, error)
 	FindCatalogByUserID(ctx context.Context, userID uuid.UUID, offset, limit int) ([]*entity.MonsterCatalogEntry, int64, error)
 	RegisterEntry(ctx context.Context, userID, monsterID uuid.UUID) error
 	IsEntryRegistered(ctx context.Context, userID, monsterID uuid.UUID) (bool, error)

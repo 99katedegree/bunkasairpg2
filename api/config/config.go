@@ -13,8 +13,9 @@ type Config struct {
 	R2SecretAccessKey  string `envconfig:"R2_SECRET_ACCESS_KEY" required:"true"`
 	R2BucketName       string `envconfig:"R2_BUCKET_NAME"       required:"true"`
 	R2PublicBaseURL    string `envconfig:"R2_PUBLIC_BASE_URL"   required:"true"`
-	JWTSecret    string `envconfig:"JWT_SECRET"    required:"true"`
-	Port         int    `envconfig:"PORT"          default:"8085"`
+	JWTSecret          string `envconfig:"JWT_SECRET"           required:"true"`
+	BattleTokenSecret  string `envconfig:"BATTLE_TOKEN_SECRET"  required:"true"`
+	Port               int    `envconfig:"PORT"                 default:"8085"`
 }
 
 func Load() (*Config, error) {

@@ -11,8 +11,72 @@ import (
 	"time"
 )
 
+const activateUser = `-- name: ActivateUser :exec
+UPDATE users SET is_activated = 1, updated_at = NOW() WHERE id = ?
+`
+
+func (q *Queries) ActivateUser(ctx context.Context, id string) error {
+	_, err := q.db.ExecContext(ctx, activateUser, id)
+	return err
+}
+
+const archiveAllUsers = `-- name: ArchiveAllUsers :exec
+UPDATE users SET is_archived = 1, updated_at = NOW() WHERE is_archived = 0
+`
+
+func (q *Queries) ArchiveAllUsers(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, archiveAllUsers)
+	return err
+}
+
+const createUser = `-- name: CreateUser :exec
+INSERT INTO users (id, name, level, hit_point, experience_point, is_archived, is_activated, created_at, updated_at)
+VALUES (?, '名無し', 1, 100, 0, 0, 0, NOW(), NOW())
+`
+
+func (q *Queries) CreateUser(ctx context.Context, id string) error {
+	_, err := q.db.ExecContext(ctx, createUser, id)
+	return err
+}
+
+const deleteInactiveUsers = `-- name: DeleteInactiveUsers :exec
+DELETE FROM users WHERE is_activated = 0
+`
+
+func (q *Queries) DeleteInactiveUsers(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteInactiveUsers)
+	return err
+}
+
+const getAllUserIDs = `-- name: GetAllUserIDs :many
+SELECT id FROM users WHERE is_archived = 0 ORDER BY created_at
+`
+
+func (q *Queries) GetAllUserIDs(ctx context.Context) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getAllUserIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserByID = `-- name: GetUserByID :one
-SELECT u.id, u.equipped_weapon_id, u.avatar_image_id, u.name, u.level, u.hit_point, u.experience_point, u.remember_token, u.created_at, u.updated_at,
+SELECT u.id, u.equipped_weapon_id, u.avatar_image_id, u.name, u.level, u.hit_point, u.experience_point, u.is_archived, u.is_activated, u.remember_token, u.created_at, u.updated_at,
     w.id as weapon_id_join, w.name as weapon_name, w.index_number as weapon_index_number, w.physics_attack, w.element_attack, w.physics_type, w.element_type,
     w.created_at as weapon_created_at, w.updated_at as weapon_updated_at,
     i.url as avatar_image_url
@@ -30,6 +94,8 @@ type GetUserByIDRow struct {
 	Level             int32          `db:"level" json:"level"`
 	HitPoint          int32          `db:"hit_point" json:"hit_point"`
 	ExperiencePoint   int32          `db:"experience_point" json:"experience_point"`
+	IsArchived        bool           `db:"is_archived" json:"is_archived"`
+	IsActivated       bool           `db:"is_activated" json:"is_activated"`
 	RememberToken     sql.NullString `db:"remember_token" json:"remember_token"`
 	CreatedAt         time.Time      `db:"created_at" json:"created_at"`
 	UpdatedAt         time.Time      `db:"updated_at" json:"updated_at"`
@@ -56,6 +122,8 @@ func (q *Queries) GetUserByID(ctx context.Context, id string) (GetUserByIDRow, e
 		&i.Level,
 		&i.HitPoint,
 		&i.ExperiencePoint,
+		&i.IsArchived,
+		&i.IsActivated,
 		&i.RememberToken,
 		&i.CreatedAt,
 		&i.UpdatedAt,

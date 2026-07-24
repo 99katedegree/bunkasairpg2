@@ -129,6 +129,22 @@ func (r *monsterRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity
 	return m, nil
 }
 
+func (r *monsterRepository) FindAllIDs(ctx context.Context) ([]uuid.UUID, error) {
+	rows, err := r.q.GetAllMonsterIDs(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]uuid.UUID, 0, len(rows))
+	for _, idStr := range rows {
+		id, err := uuid.Parse(idStr)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
+
 func (r *monsterRepository) FindCatalogByUserID(ctx context.Context, userID uuid.UUID, offset, limit int) ([]*entity.MonsterCatalogEntry, int64, error) {
 	total, err := r.q.CountMonsterCatalogByUserID(ctx, userID.String())
 	if err != nil {

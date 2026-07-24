@@ -83,7 +83,7 @@ export class Battle {
     this.rng = rng;
 
     if (!this.isBoss) {
-      startBattle({ monsterId: this.monster.id });
+      startBattle({ monsterToken: this.monster.id });
     }
   }
 

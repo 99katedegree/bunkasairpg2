@@ -25,7 +25,7 @@ export default function Page() {
 
     Promise.all([
       getMonster(monsterId),
-      startBattle({ monsterId }),
+      startBattle({ monsterToken: monsterId }),
     ]).then(([monsterRes, battleRes]) => {
       if (monsterRes.status !== 200 || battleRes.status !== 200) return;
 

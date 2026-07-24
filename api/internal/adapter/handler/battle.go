@@ -17,7 +17,10 @@ func (s *Server) StartBattle(ctx context.Context, req genapi.StartBattleRequestO
 		return genapi.StartBattle401JSONResponse{UnauthorizedJSONResponse: genapi.UnauthorizedJSONResponse{Errors: []string{"UNAUTHORIZED"}}}, nil
 	}
 
-	monsterID := req.Body.MonsterId
+	monsterID, err := s.battleToken.Decrypt(req.Body.MonsterToken)
+	if err != nil {
+		return genapi.StartBattle404JSONResponse(genapi.ErrorResponse{Errors: []string{"BATTLESTART_MONSTERNOTFOUND"}}), nil
+	}
 	token, seed, err := s.battleUC.Start(ctx, userID, monsterID)
 	if err != nil {
 		status, body := errResponse(err)

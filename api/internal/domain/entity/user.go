@@ -14,6 +14,8 @@ type User struct {
 	Level            int
 	HitPoint         int
 	ExperiencePoint  int
+	IsArchived       bool
+	IsActivated      bool
 	RememberToken    *string
 	Weapon           *Weapon // JOIN 結果（optional）
 	AvatarImageURL   *string // JOIN 結果（optional）

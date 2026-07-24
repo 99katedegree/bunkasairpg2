@@ -23,6 +23,7 @@ import (
 	genapi "github.com/99katedegree/bunkasairpg2/api/gen/api"
 	mw "github.com/99katedegree/bunkasairpg2/api/internal/adapter/middleware"
 	"github.com/99katedegree/bunkasairpg2/api/internal/adapter/handler"
+	"github.com/99katedegree/bunkasairpg2/api/internal/domain/battletoken"
 	domainrepo "github.com/99katedegree/bunkasairpg2/api/internal/domain/repository"
 	infradb "github.com/99katedegree/bunkasairpg2/api/internal/infrastructure/db"
 	dbrepo "github.com/99katedegree/bunkasairpg2/api/internal/infrastructure/db/repository"
@@ -97,6 +98,14 @@ func main() {
 	// R2 Client — 起動前 ping 済みのインスタンスを再利用
 	if err := c.Provide(func() *storage.R2Client { return r2 }); err != nil {
 		slog.Error("dig provide r2client", "err", err)
+		os.Exit(1)
+	}
+
+	// BattleToken
+	if err := c.Provide(func() *battletoken.BattleToken {
+		return battletoken.New(cfg.BattleTokenSecret)
+	}); err != nil {
+		slog.Error("dig provide battletoken", "err", err)
 		os.Exit(1)
 	}
 
@@ -178,6 +187,10 @@ func main() {
 	}
 	if err := c.Provide(usecase.NewBossBattleUsecase); err != nil {
 		slog.Error("dig provide boss battle usecase", "err", err)
+		os.Exit(1)
+	}
+	if err := c.Provide(usecase.NewGameUsecase); err != nil {
+		slog.Error("dig provide game usecase", "err", err)
 		os.Exit(1)
 	}
 

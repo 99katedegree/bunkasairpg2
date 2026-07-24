@@ -22,6 +22,33 @@ func (q *Queries) CountMonsterCatalogByUserID(ctx context.Context, userID string
 	return count, err
 }
 
+const getAllMonsterIDs = `-- name: GetAllMonsterIDs :many
+SELECT id FROM monsters ORDER BY index_number
+`
+
+func (q *Queries) GetAllMonsterIDs(ctx context.Context) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getAllMonsterIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getMonsterByID = `-- name: GetMonsterByID :one
 SELECT m.id, m.weapon_id, m.item_id, m.index_number, m.name, m.attack, m.hit_point, m.experience_point,
     m.slash, m.blow, m.shoot, m.neutral, m.flame, m.water, m.wood, m.shine, m.dark,

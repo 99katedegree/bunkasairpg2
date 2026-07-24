@@ -179,7 +179,8 @@ type BattleRewardResponseDropType string
 
 // BattleStartRequest defines model for BattleStartRequest.
 type BattleStartRequest struct {
-	MonsterId openapi_types.UUID `json:"monsterId"`
+	// MonsterToken AES暗号化されたモンスタートークン
+	MonsterToken string `json:"monsterToken"`
 }
 
 // BattleStartResponse defines model for BattleStartResponse.
@@ -211,6 +212,12 @@ type ElementType string
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse struct {
 	Errors []string `json:"errors"`
+}
+
+// GameStartRequest defines model for GameStartRequest.
+type GameStartRequest struct {
+	// Count 作成する新規ユーザー数
+	Count int `json:"count"`
 }
 
 // ImageResponse defines model for ImageResponse.
@@ -376,6 +383,9 @@ type StartBattleJSONRequestBody = BattleStartRequest
 // FinishBossBattleJSONRequestBody defines body for FinishBossBattle for application/json ContentType.
 type FinishBossBattleJSONRequestBody = BattleFinishRequest
 
+// StartGameJSONRequestBody defines body for StartGame for application/json ContentType.
+type StartGameJSONRequestBody = GameStartRequest
+
 // UploadImageMultipartRequestBody defines body for UploadImage for multipart/form-data ContentType.
 type UploadImageMultipartRequestBody UploadImageMultipartBody
 
@@ -408,6 +418,12 @@ type ServerInterface interface {
 	// ボスバトル開始
 	// (POST /boss-battles/start)
 	StartBossBattle(ctx echo.Context) error
+	// [管理者専用] 一括アーカイブ
+	// (POST /game/archive)
+	ArchiveGame(ctx echo.Context) error
+	// [管理者専用] 新規ゲームスタート
+	// (POST /game/start)
+	StartGame(ctx echo.Context) error
 	// ヘルスチェック
 	// (GET /health)
 	HealthCheck(ctx echo.Context) error
@@ -426,6 +442,9 @@ type ServerInterface interface {
 	// ログインユーザー情報更新
 	// (PATCH /me)
 	UpdateMe(ctx echo.Context) error
+	// [管理者専用] 全モンスターの暗号化バトルトークン一覧取得
+	// (GET /monsters/battle-tokens)
+	GetMonsterBattleTokens(ctx echo.Context) error
 	// モンスター図鑑取得
 	// (GET /monsters/index)
 	GetMonsters(ctx echo.Context, params GetMonstersParams) error
@@ -529,6 +548,28 @@ func (w *ServerInterfaceWrapper) StartBossBattle(ctx echo.Context) error {
 	return err
 }
 
+// ArchiveGame converts echo context to params.
+func (w *ServerInterfaceWrapper) ArchiveGame(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(string(BearerAuthScopes), []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.ArchiveGame(ctx)
+	return err
+}
+
+// StartGame converts echo context to params.
+func (w *ServerInterfaceWrapper) StartGame(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(string(BearerAuthScopes), []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.StartGame(ctx)
+	return err
+}
+
 // HealthCheck converts echo context to params.
 func (w *ServerInterfaceWrapper) HealthCheck(ctx echo.Context) error {
 	var err error
@@ -606,6 +647,17 @@ func (w *ServerInterfaceWrapper) UpdateMe(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.UpdateMe(ctx)
+	return err
+}
+
+// GetMonsterBattleTokens converts echo context to params.
+func (w *ServerInterfaceWrapper) GetMonsterBattleTokens(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(string(BearerAuthScopes), []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetMonsterBattleTokens(ctx)
 	return err
 }
 
@@ -747,12 +799,15 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options 
 	router.POST(options.BaseURL+"/battles/start", wrapper.StartBattle, options.OperationMiddlewares["startBattle"]...)
 	router.POST(options.BaseURL+"/boss-battles/finish", wrapper.FinishBossBattle, options.OperationMiddlewares["finishBossBattle"]...)
 	router.POST(options.BaseURL+"/boss-battles/start", wrapper.StartBossBattle, options.OperationMiddlewares["startBossBattle"]...)
+	router.POST(options.BaseURL+"/game/archive", wrapper.ArchiveGame, options.OperationMiddlewares["archiveGame"]...)
+	router.POST(options.BaseURL+"/game/start", wrapper.StartGame, options.OperationMiddlewares["startGame"]...)
 	router.GET(options.BaseURL+"/health", wrapper.HealthCheck, options.OperationMiddlewares["healthCheck"]...)
 	router.POST(options.BaseURL+"/images", wrapper.UploadImage, options.OperationMiddlewares["uploadImage"]...)
 	router.GET(options.BaseURL+"/items", wrapper.GetItems, options.OperationMiddlewares["getItems"]...)
 	router.GET(options.BaseURL+"/items/index", wrapper.GetMeItemIndex, options.OperationMiddlewares["getMeItemIndex"]...)
 	router.GET(options.BaseURL+"/me", wrapper.GetMe, options.OperationMiddlewares["getMe"]...)
 	router.PATCH(options.BaseURL+"/me", wrapper.UpdateMe, options.OperationMiddlewares["updateMe"]...)
+	router.GET(options.BaseURL+"/monsters/battle-tokens", wrapper.GetMonsterBattleTokens, options.OperationMiddlewares["getMonsterBattleTokens"]...)
 	router.GET(options.BaseURL+"/monsters/index", wrapper.GetMonsters, options.OperationMiddlewares["getMonsters"]...)
 	router.GET(options.BaseURL+"/monsters/:monsterId", wrapper.GetMonster, options.OperationMiddlewares["getMonster"]...)
 	router.GET(options.BaseURL+"/weapons", wrapper.GetWeapons, options.OperationMiddlewares["getWeapons"]...)
@@ -1107,6 +1162,73 @@ func (response StartBossBattle401JSONResponse) VisitStartBossBattleResponse(w ht
 	return err
 }
 
+type ArchiveGameRequestObject struct {
+}
+
+type ArchiveGameResponseObject interface {
+	VisitArchiveGameResponse(w http.ResponseWriter) error
+}
+
+type ArchiveGame204Response struct {
+}
+
+func (response ArchiveGame204Response) VisitArchiveGameResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ArchiveGame401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response ArchiveGame401JSONResponse) VisitArchiveGameResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StartGameRequestObject struct {
+	Body *StartGameJSONRequestBody
+}
+
+type StartGameResponseObject interface {
+	VisitStartGameResponse(w http.ResponseWriter) error
+}
+
+type StartGame200JSONResponse struct {
+	UserIds []openapi_types.UUID `json:"userIds"`
+}
+
+func (response StartGame200JSONResponse) VisitStartGameResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StartGame401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response StartGame401JSONResponse) VisitStartGameResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type HealthCheckRequestObject struct {
 }
 
@@ -1311,6 +1433,43 @@ func (response UpdateMe401JSONResponse) VisitUpdateMeResponse(w http.ResponseWri
 	return err
 }
 
+type GetMonsterBattleTokensRequestObject struct {
+}
+
+type GetMonsterBattleTokensResponseObject interface {
+	VisitGetMonsterBattleTokensResponse(w http.ResponseWriter) error
+}
+
+type GetMonsterBattleTokens200JSONResponse struct {
+	Tokens []string `json:"tokens"`
+}
+
+func (response GetMonsterBattleTokens200JSONResponse) VisitGetMonsterBattleTokensResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetMonsterBattleTokens401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetMonsterBattleTokens401JSONResponse) VisitGetMonsterBattleTokensResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetMonstersRequestObject struct {
 	Params GetMonstersParams
 }
@@ -1504,6 +1663,12 @@ type StrictServerInterface interface {
 	// ボスバトル開始
 	// (POST /boss-battles/start)
 	StartBossBattle(ctx context.Context, request StartBossBattleRequestObject) (StartBossBattleResponseObject, error)
+	// [管理者専用] 一括アーカイブ
+	// (POST /game/archive)
+	ArchiveGame(ctx context.Context, request ArchiveGameRequestObject) (ArchiveGameResponseObject, error)
+	// [管理者専用] 新規ゲームスタート
+	// (POST /game/start)
+	StartGame(ctx context.Context, request StartGameRequestObject) (StartGameResponseObject, error)
 	// ヘルスチェック
 	// (GET /health)
 	HealthCheck(ctx context.Context, request HealthCheckRequestObject) (HealthCheckResponseObject, error)
@@ -1522,6 +1687,9 @@ type StrictServerInterface interface {
 	// ログインユーザー情報更新
 	// (PATCH /me)
 	UpdateMe(ctx context.Context, request UpdateMeRequestObject) (UpdateMeResponseObject, error)
+	// [管理者専用] 全モンスターの暗号化バトルトークン一覧取得
+	// (GET /monsters/battle-tokens)
+	GetMonsterBattleTokens(ctx context.Context, request GetMonsterBattleTokensRequestObject) (GetMonsterBattleTokensResponseObject, error)
 	// モンスター図鑑取得
 	// (GET /monsters/index)
 	GetMonsters(ctx context.Context, request GetMonstersRequestObject) (GetMonstersResponseObject, error)
@@ -1774,6 +1942,58 @@ func (sh *strictHandler) StartBossBattle(ctx echo.Context) error {
 	return nil
 }
 
+// ArchiveGame operation middleware
+func (sh *strictHandler) ArchiveGame(ctx echo.Context) error {
+	var request ArchiveGameRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ArchiveGame(ctx.Request().Context(), request.(ArchiveGameRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ArchiveGame")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(ArchiveGameResponseObject); ok {
+		return validResponse.VisitArchiveGameResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// StartGame operation middleware
+func (sh *strictHandler) StartGame(ctx echo.Context) error {
+	var request StartGameRequestObject
+
+	var body StartGameJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.StartGame(ctx.Request().Context(), request.(StartGameRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "StartGame")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(StartGameResponseObject); ok {
+		return validResponse.VisitStartGameResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
 // HealthCheck operation middleware
 func (sh *strictHandler) HealthCheck(ctx echo.Context) error {
 	var request HealthCheckRequestObject
@@ -1920,6 +2140,29 @@ func (sh *strictHandler) UpdateMe(ctx echo.Context) error {
 		return err
 	} else if validResponse, ok := response.(UpdateMeResponseObject); ok {
 		return validResponse.VisitUpdateMeResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// GetMonsterBattleTokens operation middleware
+func (sh *strictHandler) GetMonsterBattleTokens(ctx echo.Context) error {
+	var request GetMonsterBattleTokensRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetMonsterBattleTokens(ctx.Request().Context(), request.(GetMonsterBattleTokensRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetMonsterBattleTokens")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetMonsterBattleTokensResponseObject); ok {
+		return validResponse.VisitGetMonsterBattleTokensResponse(ctx.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}

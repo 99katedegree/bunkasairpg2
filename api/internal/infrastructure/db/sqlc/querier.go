@@ -9,14 +9,20 @@ import (
 )
 
 type Querier interface {
+	ActivateUser(ctx context.Context, id string) error
+	ArchiveAllUsers(ctx context.Context) error
 	CountItemIndexByUserID(ctx context.Context, userID string) (int64, error)
 	CountMonsterCatalogByUserID(ctx context.Context, userID string) (int64, error)
 	CountWeaponIndexByUserID(ctx context.Context, userID string) (int64, error)
 	CreateBattle(ctx context.Context, arg CreateBattleParams) error
 	CreateImage(ctx context.Context, arg CreateImageParams) error
+	CreateUser(ctx context.Context, id string) error
 	DecrementUserItem(ctx context.Context, arg DecrementUserItemParams) error
+	DeleteInactiveUsers(ctx context.Context) error
 	DeleteUserItemIfZero(ctx context.Context, arg DeleteUserItemIfZeroParams) error
 	FindAdminByEmail(ctx context.Context, email string) (Admin, error)
+	GetAllMonsterIDs(ctx context.Context) ([]string, error)
+	GetAllUserIDs(ctx context.Context) ([]string, error)
 	GetBattleByID(ctx context.Context, id string) (Battle, error)
 	GetItemByID(ctx context.Context, id int64) (GetItemByIDRow, error)
 	GetItemIndexByUserID(ctx context.Context, arg GetItemIndexByUserIDParams) ([]GetItemIndexByUserIDRow, error)

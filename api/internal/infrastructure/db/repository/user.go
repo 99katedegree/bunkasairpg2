@@ -12,6 +12,8 @@ import (
 	dbgen "github.com/99katedegree/bunkasairpg2/api/internal/infrastructure/db/sqlc"
 )
 
+var _ domainrepo.UserRepository = (*userRepository)(nil)
+
 type userRepository struct {
 	db *sql.DB
 	q  *dbgen.Queries
@@ -41,6 +43,8 @@ func (r *userRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.Us
 		Level:           int(row.Level),
 		HitPoint:        int(row.HitPoint),
 		ExperiencePoint: int(row.ExperiencePoint),
+		IsArchived:      row.IsArchived,
+		IsActivated:     row.IsActivated,
 		CreatedAt:       row.CreatedAt,
 		UpdatedAt:       row.UpdatedAt,
 	}
@@ -84,6 +88,46 @@ func (r *userRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity.Us
 	}
 
 	return u, nil
+}
+
+func (r *userRepository) Activate(ctx context.Context, id uuid.UUID) error {
+	return r.q.ActivateUser(ctx, id.String())
+}
+
+func (r *userRepository) ArchiveAll(ctx context.Context) error {
+	return r.q.ArchiveAllUsers(ctx)
+}
+
+func (r *userRepository) DeleteInactive(ctx context.Context) error {
+	return r.q.DeleteInactiveUsers(ctx)
+}
+
+func (r *userRepository) BulkCreate(ctx context.Context, count int) ([]uuid.UUID, error) {
+	ids := make([]uuid.UUID, count)
+	for i := range count {
+		id := uuid.New()
+		if err := r.q.CreateUser(ctx, id.String()); err != nil {
+			return nil, err
+		}
+		ids[i] = id
+	}
+	return ids, nil
+}
+
+func (r *userRepository) GetAllIDs(ctx context.Context) ([]uuid.UUID, error) {
+	rows, err := r.q.GetAllUserIDs(ctx)
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]uuid.UUID, 0, len(rows))
+	for _, s := range rows {
+		id, err := uuid.Parse(s)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
 }
 
 func (r *userRepository) Update(ctx context.Context, u *entity.UpdateUser) error {

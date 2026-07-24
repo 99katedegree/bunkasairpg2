@@ -14,6 +14,7 @@ import type {
 import type {
   ErrorResponse,
   GetMonster200,
+  GetMonsterBattleTokens200,
   GetMonsters200,
   GetMonstersParams,
   UnauthorizedResponse
@@ -97,6 +98,80 @@ export const useGetMonsters = <TError = Promise<UnauthorizedResponse>>(
   const isEnabled = swrOptions?.enabled !== false
   const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetMonstersKey(params) : null);
   const swrFn = () => getMonsters(params, fetchOptions)
+
+  const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions)
+
+  return {
+    swrKey,
+    ...query
+  }
+}
+export type getMonsterBattleTokensResponse200 = {
+  data: GetMonsterBattleTokens200
+  status: 200
+}
+
+export type getMonsterBattleTokensResponse401 = {
+  data: UnauthorizedResponse
+  status: 401
+}
+
+export type getMonsterBattleTokensResponseSuccess = (getMonsterBattleTokensResponse200) & {
+  headers: Headers;
+};
+export type getMonsterBattleTokensResponseError = (getMonsterBattleTokensResponse401) & {
+  headers: Headers;
+};
+
+export type getMonsterBattleTokensResponse = (getMonsterBattleTokensResponseSuccess | getMonsterBattleTokensResponseError)
+
+export const getGetMonsterBattleTokensUrl = () => {
+
+
+
+
+  return `http://localhost:8085/monsters/battle-tokens`
+}
+
+/**
+ * @summary [管理者専用] 全モンスターの暗号化バトルトークン一覧取得
+ */
+export const getMonsterBattleTokens = async ( options?: RequestInit): Promise<getMonsterBattleTokensResponse> => {
+
+  const res = await fetch(getGetMonsterBattleTokensUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getMonsterBattleTokensResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getMonsterBattleTokensResponse
+}
+
+
+
+
+export const getGetMonsterBattleTokensKey = () => [`http://localhost:8085/monsters/battle-tokens`] as const;
+
+export type GetMonsterBattleTokensQueryResult = NonNullable<Awaited<ReturnType<typeof getMonsterBattleTokens>>>
+
+/**
+ * @summary [管理者専用] 全モンスターの暗号化バトルトークン一覧取得
+ */
+export const useGetMonsterBattleTokens = <TError = Promise<UnauthorizedResponse>>(
+   options?: { swr?:SWRConfiguration<Awaited<ReturnType<typeof getMonsterBattleTokens>>, TError> & { swrKey?: Key, enabled?: boolean }, fetch?: RequestInit }
+) => {
+  const {swr: swrOptions, fetch: fetchOptions} = options ?? {}
+
+  const isEnabled = swrOptions?.enabled !== false
+  const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetMonsterBattleTokensKey() : null);
+  const swrFn = () => getMonsterBattleTokens(fetchOptions)
 
   const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions)
 

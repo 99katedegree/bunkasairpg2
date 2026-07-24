@@ -31,3 +31,6 @@ VALUES (?, ?, NOW(), NOW());
 
 -- name: IsMonsterEntryRegistered :one
 SELECT COUNT(*) FROM monster_entries WHERE user_id = ? AND monster_id = ?;
+
+-- name: GetAllMonsterIDs :many
+SELECT id FROM monsters ORDER BY index_number;

@@ -123,6 +123,8 @@ type User struct {
 	RememberToken    sql.NullString `db:"remember_token" json:"remember_token"`
 	CreatedAt        time.Time      `db:"created_at" json:"created_at"`
 	UpdatedAt        time.Time      `db:"updated_at" json:"updated_at"`
+	IsArchived       bool           `db:"is_archived" json:"is_archived"`
+	IsActivated      bool           `db:"is_activated" json:"is_activated"`
 }
 
 type UserItem struct {

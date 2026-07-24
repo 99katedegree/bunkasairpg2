@@ -25,10 +25,10 @@ func NewAuthUsecase(userRepo repository.UserRepository, adminRepo repository.Adm
 
 // Login はユーザー UUID を確認し JWT を返す
 func (u *AuthUsecase) Login(ctx context.Context, userID uuid.UUID) (string, error) {
-	_, err := u.userRepo.FindByID(ctx, userID)
-	if err != nil {
+	if _, err := u.userRepo.FindByID(ctx, userID); err != nil {
 		return "", entity.ErrNotFound
 	}
+	_ = u.userRepo.Activate(ctx, userID)
 	return u.generateToken("user", userID.String())
 }
 

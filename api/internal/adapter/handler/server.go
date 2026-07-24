@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/99katedegree/bunkasairpg2/api/internal/domain/battle"
+	"github.com/99katedegree/bunkasairpg2/api/internal/domain/battletoken"
 	"github.com/99katedegree/bunkasairpg2/api/internal/domain/entity"
 	genapi "github.com/99katedegree/bunkasairpg2/api/gen/api"
 	"github.com/99katedegree/bunkasairpg2/api/internal/usecase"
@@ -20,6 +21,8 @@ type Server struct {
 	monsterUC    *usecase.MonsterUsecase
 	battleUC     *usecase.BattleUsecase
 	bossBattleUC *usecase.BossBattleUsecase
+	gameUC       *usecase.GameUsecase
+	battleToken  *battletoken.BattleToken
 }
 
 func NewServer(
@@ -31,6 +34,8 @@ func NewServer(
 	monsterUC *usecase.MonsterUsecase,
 	battleUC *usecase.BattleUsecase,
 	bossBattleUC *usecase.BossBattleUsecase,
+	gameUC *usecase.GameUsecase,
+	battleToken *battletoken.BattleToken,
 ) *Server {
 	return &Server{
 		authUC:       authUC,
@@ -41,6 +46,8 @@ func NewServer(
 		monsterUC:    monsterUC,
 		battleUC:     battleUC,
 		bossBattleUC: bossBattleUC,
+		gameUC:       gameUC,
+		battleToken:  battleToken,
 	}
 }
 

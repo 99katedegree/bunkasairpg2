@@ -142,8 +142,17 @@ export interface BossFinishResponse {
   hitPoint: number;
 }
 
+export interface GameStartRequest {
+  /**
+     * 作成する新規ユーザー数
+     * @minimum 1
+     */
+  count: number;
+}
+
 export interface BattleStartRequest {
-  monsterId: string;
+  /** AES暗号化されたモンスタートークン */
+  monsterToken: string;
 }
 
 export interface BattleStartResponse {
@@ -287,6 +296,14 @@ limit?: LimitParameter;
 export type GetMeItemIndex200 = {
   items: (ItemResponse | null)[];
   total: number;
+};
+
+export type GetMonsterBattleTokens200 = {
+  tokens: string[];
+};
+
+export type StartGame200 = {
+  userIds: string[];
 };
 
 export type GetMonster200 = {

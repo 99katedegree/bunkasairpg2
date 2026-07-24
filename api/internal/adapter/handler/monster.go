@@ -45,6 +45,14 @@ func (s *Server) GetMonsters(ctx context.Context, req genapi.GetMonstersRequestO
 	return genapi.GetMonsters200JSONResponse{Monsters: resp, Total: int(total)}, nil
 }
 
+func (s *Server) GetMonsterBattleTokens(ctx context.Context, req genapi.GetMonsterBattleTokensRequestObject) (genapi.GetMonsterBattleTokensResponseObject, error) {
+	tokens, err := s.monsterUC.GetBattleTokens(ctx)
+	if err != nil {
+		return genapi.GetMonsterBattleTokens401JSONResponse{UnauthorizedJSONResponse: genapi.UnauthorizedJSONResponse{Errors: []string{"INTERNAL"}}}, nil
+	}
+	return genapi.GetMonsterBattleTokens200JSONResponse{Tokens: tokens}, nil
+}
+
 func (s *Server) GetMonster(ctx context.Context, req genapi.GetMonsterRequestObject) (genapi.GetMonsterResponseObject, error) {
 	echoCtx, ok := mw.GetEchoContext(ctx)
 	if !ok {

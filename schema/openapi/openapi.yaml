@@ -29,6 +29,8 @@ tags:
     description: バトル
   - name: boss
     description: ボスバトル
+  - name: game
+    description: ゲーム管理
 
 paths:
   /health:
@@ -504,6 +506,76 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+  /monsters/battle-tokens:
+    get:
+      tags: [monster]
+      summary: "[管理者専用] 全モンスターの暗号化バトルトークン一覧取得"
+      operationId: getMonsterBattleTokens
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 暗号化済みモンスタートークン一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [tokens]
+                properties:
+                  tokens:
+                    type: array
+                    items:
+                      type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /game/start:
+    post:
+      tags: [game]
+      summary: "[管理者専用] 新規ゲームスタート"
+      description: |
+        既存ユーザーをアーカイブし（未ログインユーザーは削除）、指定数の新規ユーザーを作成する。
+        作成した全ユーザーのIDを返す（クライアント側でログインQR PDFを生成するために使用）。
+      operationId: startGame
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GameStartRequest'
+      responses:
+        '200':
+          description: 新規ユーザーID一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [userIds]
+                properties:
+                  userIds:
+                    type: array
+                    items:
+                      type: string
+                      format: uuid
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /game/archive:
+    post:
+      tags: [game]
+      summary: "[管理者専用] 一括アーカイブ"
+      description: 既存ユーザーをアーカイブする。未ログインユーザーのレコードは削除する。
+      operationId: archiveGame
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: アーカイブ完了
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
   /monsters/{monsterId}:
     get:
       tags: [monster]
@@ -807,13 +879,22 @@ components:
         hitPoint:
           type: integer
 
+    GameStartRequest:
+      type: object
+      required: [count]
+      properties:
+        count:
+          type: integer
+          description: 作成する新規ユーザー数
+          minimum: 1
+
     BattleStartRequest:
       type: object
-      required: [monsterId]
+      required: [monsterToken]
       properties:
-        monsterId:
+        monsterToken:
           type: string
-          format: uuid
+          description: AES暗号化されたモンスタートークン
 
     BattleStartResponse:
       type: object
