@@ -1,0 +1,158 @@
+Table images {
+  id         bigint [pk, increment, not null]
+  directory  varchar(255) [not null]
+  url        varchar(2048) [not null]
+  created_at datetime(3) [not null, default: `CURRENT_TIMESTAMP(3)`]
+}
+
+Table users {
+  id                 uuid [pk]
+  equipped_weapon_id bigint [null, ref: > weapons.id]
+  avatar_image_id    bigint [null, ref: > images.id]
+  name               varchar
+  level              int [default: 1]
+  hit_point          int
+  experience_point   int [default: 0]
+  remember_token     varchar [null]
+  created_at         timestamp
+  updated_at         timestamp
+}
+
+Table weapons {
+  id             bigint [pk, increment]
+  name           varchar
+  index_number   varchar [unique]
+  physics_attack int
+  element_attack int [null]
+  physics_type   varchar // slash | blow | shoot
+  element_type   varchar // neutral | flame | water | wood | shine | dark
+  created_at     timestamp
+  updated_at     timestamp
+}
+
+Table items {
+  id           bigint [pk, increment]
+  name         varchar
+  index_number varchar [unique]
+  effect_type  varchar // heal | buff | debuff
+  created_at   timestamp
+  updated_at   timestamp
+}
+
+Table heal_items {
+  item_id    bigint [pk, ref: - items.id]
+  amount     int
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table buff_items {
+  item_id    bigint [pk, ref: - items.id]
+  rate       decimal
+  target     varchar // slash | blow | shoot | neutral | flame | water | wood | shine | dark
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table debuff_items {
+  item_id    bigint [pk, ref: - items.id]
+  rate       decimal
+  target     varchar // slash | blow | shoot | neutral | flame | water | wood | shine | dark
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table monsters {
+  id                uuid [pk]
+  weapon_id         bigint [null, ref: > weapons.id]
+  item_id           bigint [null, ref: > items.id]
+  index_number      varchar [unique]
+  name              varchar
+  attack            int
+  hit_point         int
+  experience_point  int
+  slash             decimal
+  blow              decimal
+  shoot             decimal
+  neutral           decimal
+  flame             decimal
+  water             decimal
+  wood              decimal
+  shine             decimal
+  dark              decimal
+  created_at        timestamp
+  updated_at        timestamp
+}
+
+Table user_items {
+  user_id    uuid [ref: > users.id]
+  item_id    bigint [ref: > items.id]
+  count      int
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (user_id, item_id) [pk]
+  }
+}
+
+Table user_weapons {
+  user_id    uuid [ref: > users.id]
+  weapon_id  bigint [ref: > weapons.id]
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (user_id, weapon_id) [pk]
+  }
+}
+
+Table monster_entries {
+  user_id    uuid [ref: > users.id]
+  monster_id uuid [ref: > monsters.id]
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (user_id, monster_id) [pk]
+  }
+}
+
+Table weapon_entries {
+  user_id    uuid [ref: > users.id]
+  weapon_id  bigint [ref: > weapons.id]
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (user_id, weapon_id) [pk]
+  }
+}
+
+Table item_entries {
+  user_id    uuid [ref: > users.id]
+  item_id    bigint [ref: > items.id]
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (user_id, item_id) [pk]
+  }
+}
+
+Table battles {
+  id         uuid [pk]
+  user_id    uuid [not null, ref: > users.id]
+  monster_id uuid [null, ref: > monsters.id] // null = ボスバトル
+  seed       bigint [not null]
+  status     varchar [not null] // in_progress | completed | lost | expired
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table boss_records {
+  user_id    uuid [pk, ref: - users.id]
+  clear_time int [not null] // ミリ秒。battles.updated_at - battles.created_at で算出
+  created_at timestamp
+  updated_at timestamp
+}

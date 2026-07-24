@@ -1,0 +1,18 @@
+{
+  "name": "schema",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "serve": "scalar document serve openapi/openapi.yaml --port 8081 --watch",
+    "mock": "scalar document mock openapi/openapi.yaml --port 3001 --watch",
+    "lint": "scalar document validate openapi/openapi.yaml",
+    "bundle": "scalar document bundle openapi/openapi.yaml --output dist/openapi.yaml"
+  },
+  "devDependencies": {
+    "@scalar/cli": "^2.0.1",
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

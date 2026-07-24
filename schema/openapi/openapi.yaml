@@ -1,0 +1,896 @@
+openapi: 3.0.3
+info:
+  title: Bunkasai RPG API
+  version: 0.1.0
+  description: 文化祭RPG API
+
+servers:
+  - url: http://localhost:8085
+    description: Local
+
+tags:
+  - name: health
+    description: ヘルスチェック
+  - name: auth
+    description: 認証
+  - name: image
+    description: 画像
+  - name: me
+    description: ログインユーザー
+  - name: monster
+    description: モンスター
+  - name: item
+    description: アイテム
+  - name: weapon
+    description: 武器
+  - name: action
+    description: アクション
+  - name: battle
+    description: バトル
+  - name: boss
+    description: ボスバトル
+
+paths:
+  /health:
+    get:
+      tags: [health]
+      summary: ヘルスチェック
+      operationId: healthCheck
+      responses:
+        '200':
+          description: 正常
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /images:
+    post:
+      tags: [image]
+      summary: 画像アップロード
+      operationId: uploadImage
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [imageFile, directory]
+              properties:
+                imageFile:
+                  type: string
+                  format: binary
+                directory:
+                  type: string
+      responses:
+        '200':
+          description: アップロード成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [image]
+                properties:
+                  image:
+                    $ref: '#/components/schemas/ImageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/user-login:
+    post:
+      tags: [auth]
+      summary: ユーザーログイン
+      operationId: userLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLoginRequest'
+      responses:
+        '200':
+          description: ログイン成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                errors: [USERLOGIN_USERNOTFOUND]
+
+  /auth/admin-login:
+    post:
+      tags: [auth]
+      summary: 管理者ログイン
+      operationId: adminLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLoginRequest'
+      responses:
+        '200':
+          description: ログイン成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                errors: [ADMINLOGIN_INVALID]
+
+  /me:
+    get:
+      tags: [me]
+      summary: ログインユーザー情報取得
+      operationId: getMe
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: ユーザー情報
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [user]
+                properties:
+                  user:
+                    $ref: '#/components/schemas/MeResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    patch:
+      tags: [me]
+      summary: ログインユーザー情報更新
+      operationId: updateMe
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMeRequest'
+      responses:
+        '204':
+          description: 更新成功
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /items:
+    get:
+      tags: [item]
+      summary: 所持アイテム一覧取得
+      operationId: getItems
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 所持アイテム一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserItemResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /actions/use-items:
+    patch:
+      tags: [action]
+      summary: アイテム使用
+      operationId: useMeItem
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UseItemRequest'
+      responses:
+        '204':
+          description: 使用成功
+        '400':
+          description: リクエストエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                itemNotFound:
+                  summary: アイテムが存在しない
+                  value:
+                    errors: [USEITEM_ITEMNOTFOUND]
+                itemStockEmpty:
+                  summary: アイテムの在庫が0
+                  value:
+                    errors: [USEITEM_ITEMSTOCKEMPTY]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /weapons:
+    get:
+      tags: [weapon]
+      summary: 所持武器一覧取得
+      operationId: getWeapons
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 所持武器一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [weapons]
+                properties:
+                  weapons:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WeaponResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /actions/change-weapons:
+    patch:
+      tags: [action]
+      summary: 装備武器変更
+      operationId: changeMeWeapon
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeWeaponRequest'
+      responses:
+        '204':
+          description: 変更成功
+        '400':
+          description: リクエストエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                errors: [CHANGEWEAPON_WEAPONNOTOWNED]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /battles/start:
+    post:
+      tags: [battle]
+      summary: バトル開始（モンスター図鑑未登録なら自動登録）
+      operationId: startBattle
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BattleStartRequest'
+      responses:
+        '200':
+          description: バトル開始成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BattleStartResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: モンスターが存在しない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                errors: [BATTLESTART_MONSTERNOTFOUND]
+
+  /battles/finish:
+    post:
+      tags: [battle]
+      summary: バトル終了
+      operationId: finishBattle
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BattleFinishRequest'
+      responses:
+        '200':
+          description: バトル勝利・報酬付与
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BattleRewardResponse'
+        '400':
+          description: バトル敗北または結果不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                lost:
+                  summary: バトル敗北
+                  value:
+                    errors: [BATTLEFINISH_LOST]
+                invalid:
+                  summary: 結果が再現と一致しない
+                  value:
+                    errors: [BATTLEFINISH_INVALID]
+                expired:
+                  summary: トークン期限切れ
+                  value:
+                    errors: [BATTLEFINISH_EXPIRED]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /monsters/index:
+    get:
+      tags: [monster]
+      summary: モンスター図鑑取得
+      operationId: getMonsters
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: モンスター図鑑
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [monsters, total]
+                properties:
+                  monsters:
+                    type: array
+                    items:
+                      nullable: true
+                      allOf:
+                        - $ref: '#/components/schemas/MonsterCatalogResponse'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /weapons/index:
+    get:
+      tags: [weapon]
+      summary: 武器図鑑取得
+      operationId: getMeWeaponIndex
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: 武器図鑑
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [weapons, total]
+                properties:
+                  weapons:
+                    type: array
+                    items:
+                      nullable: true
+                      allOf:
+                        - $ref: '#/components/schemas/WeaponResponse'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /items/index:
+    get:
+      tags: [item]
+      summary: アイテム図鑑取得
+      operationId: getMeItemIndex
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: アイテム図鑑
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, total]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      nullable: true
+                      allOf:
+                        - $ref: '#/components/schemas/ItemResponse'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /boss-battles/start:
+    post:
+      tags: [boss]
+      summary: ボスバトル開始
+      operationId: startBossBattle
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: ボスバトル開始成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BattleStartResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /boss-battles/finish:
+    post:
+      tags: [boss]
+      summary: ボスバトル終了（クリアタイムはサーバーが計測）
+      operationId: finishBossBattle
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BattleFinishRequest'
+      responses:
+        '200':
+          description: ボス撃破・クリア記録登録
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BossFinishResponse'
+        '400':
+          description: バトル敗北または結果不正
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                lost:
+                  summary: バトル敗北
+                  value:
+                    errors: [BOSSFINISH_LOST]
+                invalid:
+                  summary: 結果が再現と一致しない
+                  value:
+                    errors: [BOSSFINISH_INVALID]
+                expired:
+                  summary: トークン期限切れ
+                  value:
+                    errors: [BOSSFINISH_EXPIRED]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /monsters/{monsterId}:
+    get:
+      tags: [monster]
+      summary: モンスター詳細取得
+      operationId: getMonster
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: monsterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: モンスター詳細
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [monster]
+                properties:
+                  monster:
+                    $ref: '#/components/schemas/MonsterDetailResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: リソースが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                errors: [GETMONSTER_NOTFOUND]
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  parameters:
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 20
+
+  responses:
+    Unauthorized:
+      description: 認証エラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            errors: [UNAUTHORIZED]
+    BadRequest:
+      description: リクエストエラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            errors: [BADREQUEST]
+    NotFound:
+      description: リソースが見つからない
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            errors: [NOTFOUND]
+
+  schemas:
+    PhysicsType:
+      type: string
+      enum: [slash, blow, shoot]
+
+    ElementType:
+      type: string
+      enum: [neutral, flame, water, wood, shine, dark]
+
+    EffectType:
+      type: string
+      enum: [heal, buff, debuff]
+
+    ErrorResponse:
+      type: object
+      required: [errors]
+      properties:
+        errors:
+          type: array
+          items:
+            type: string
+
+    ImageResponse:
+      type: object
+      required: [id, url]
+      properties:
+        id:
+          type: integer
+        url:
+          type: string
+
+    UserLoginRequest:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+          format: uuid
+
+    AdminLoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [authToken]
+      properties:
+        authToken:
+          type: string
+
+    WeaponResponse:
+      type: object
+      required: [id, name, physicsAttack, elementAttack, physicsType, elementType]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        physicsAttack:
+          type: number
+        elementAttack:
+          type: number
+          nullable: true
+        physicsType:
+          $ref: '#/components/schemas/PhysicsType'
+        elementType:
+          $ref: '#/components/schemas/ElementType'
+
+    MeResponse:
+      type: object
+      required: [id, name, level, hitPoint, experiencePoint]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        avatarImageUrl:
+          type: string
+          nullable: true
+        level:
+          type: integer
+        hitPoint:
+          type: integer
+        experiencePoint:
+          type: integer
+        weapon:
+          $ref: '#/components/schemas/WeaponResponse'
+          nullable: true
+
+    UpdateMeRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        level:
+          type: integer
+        hitPoint:
+          type: integer
+        experiencePoint:
+          type: integer
+        equippedWeaponId:
+          type: integer
+        avatarImageId:
+          type: integer
+
+    ItemResponse:
+      type: object
+      required: [id, name, effectType]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        effectType:
+          $ref: '#/components/schemas/EffectType'
+        amount:
+          type: integer
+          description: heal のみ
+        rate:
+          type: number
+          description: buff / debuff のみ
+        target:
+          type: string
+          description: buff / debuff のみ
+
+    UserItemResponse:
+      allOf:
+        - $ref: '#/components/schemas/ItemResponse'
+        - type: object
+          required: [count]
+          properties:
+            count:
+              type: integer
+
+    MonsterCatalogResponse:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+          format: uuid
+
+    MonsterDetailResponse:
+      type: object
+      required: [id, name, attack, hitPoint, experiencePoint]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        attack:
+          type: integer
+        hitPoint:
+          type: integer
+        experiencePoint:
+          type: integer
+        slash:
+          type: number
+        blow:
+          type: number
+        shoot:
+          type: number
+        neutral:
+          type: number
+        flame:
+          type: number
+        water:
+          type: number
+        wood:
+          type: number
+        shine:
+          type: number
+        dark:
+          type: number
+        weapon:
+          $ref: '#/components/schemas/WeaponResponse'
+          nullable: true
+        item:
+          $ref: '#/components/schemas/ItemResponse'
+          nullable: true
+
+    UseItemRequest:
+      type: object
+      required: [itemId]
+      properties:
+        itemId:
+          type: integer
+
+    ChangeWeaponRequest:
+      type: object
+      required: [weaponId]
+      properties:
+        weaponId:
+          type: integer
+
+    BossFinishResponse:
+      type: object
+      required: [clearTime, experiencePoint, level, hitPoint]
+      properties:
+        clearTime:
+          type: integer
+          description: クリアタイム（ミリ秒）。サーバーが battles.updated_at - battles.created_at で計算
+        experiencePoint:
+          type: integer
+        level:
+          type: integer
+        hitPoint:
+          type: integer
+
+    BattleStartRequest:
+      type: object
+      required: [monsterId]
+      properties:
+        monsterId:
+          type: string
+          format: uuid
+
+    BattleStartResponse:
+      type: object
+      required: [token, seed]
+      properties:
+        token:
+          type: string
+          format: uuid
+        seed:
+          type: integer
+
+    BattleAction:
+      type: object
+      required: [turn, type]
+      properties:
+        turn:
+          type: integer
+        type:
+          type: string
+          enum: [attack, use-item, change-weapon]
+        itemId:
+          type: integer
+          description: use-item のとき必須
+        weaponId:
+          type: integer
+          description: change-weapon のとき必須
+
+    BattleFinishRequest:
+      type: object
+      required: [token, actions]
+      properties:
+        token:
+          type: string
+          format: uuid
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/BattleAction'
+
+    BattleRewardResponse:
+      type: object
+      required: [experiencePoint, level, hitPoint]
+      properties:
+        experiencePoint:
+          type: integer
+        level:
+          type: integer
+        hitPoint:
+          type: integer
+        drop:
+          nullable: true
+          allOf:
+            - type: object
+              required: [type]
+              properties:
+                type:
+                  type: string
+                  enum: [weapon, item]
+                weaponId:
+                  type: integer
+                  nullable: true
+                itemId:
+                  type: integer
+                  nullable: true
+
+    UserStoreRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+
+    UserStoreResponse:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+          format: uuid
+
