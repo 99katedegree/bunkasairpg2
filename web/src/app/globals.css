@@ -1,0 +1,114 @@
+@import url("https://fonts.googleapis.com/css2?family=Abhaya+Libre:wght@800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DotGothic16&display=swap");
+
+@import "tailwindcss";
+
+@theme {
+  --color-black: black;
+
+  --color-gray: oklch(96.7% 0.001 286.375);
+  --color-gray-dark: oklch(92% 0.004 286.32);
+
+  --color-white: #ffffff;
+
+  --color-slash: var(--color-gray-400);
+  --color-blow: var(--color-gray-400);
+  --color-shoot: var(--color-gray-400);
+
+  --color-neutral: var(--color-gray-400);
+  --color-neutral-dark: var(--color-gray-600);
+  --color-flame: var(--color-red-400);
+  --color-flame-dark: var(--color-red-600);
+  --color-water: var(--color-blue-400);
+  --color-water-dark: var(--color-blue-600);
+  --color-wood: var(--color-green-400);
+  --color-wood-dark: var(--color-green-600);
+  --color-shine: var(--color-yellow-400);
+  --color-shine-dark: var(--color-yellow-600);
+  --color-dark: var(--color-violet-400);
+  --color-dark-dark: var(--color-violet-600);
+  --color-heal: var(--color-pink-400);
+  --color-heal-dark: var(--color-pink-600);
+  --color-buff: var(--color-red-400);
+  --color-buff-dark: var(--color-red-600);
+  --color-debuff: var(--color-sky-400);
+  --color-debuff-dark: var(--color-sky-600);
+
+  --font-dot-gothic: "DotGothic16", sans-serif;
+  --font-dotgothic: "DotGothic16", sans-serif;
+  --font-abhaya: "Abhaya Libre", serif;
+
+  --text-shadow-outline: -1px -1px 0 #410606, 1px -1px 0 #410606,
+    -1px 1px 0 #410606, 1px 1px 0 #410606;
+}
+
+body::-webkit-scrollbar {
+  display: none;
+}
+
+html.admin {
+  overflow-x: hidden;
+}
+
+html.admin::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: repeating-linear-gradient(
+      135deg,
+      rgb(0, 0, 0) 0,
+      rgb(0, 0, 0) 10px,
+      transparent 10px,
+      transparent 11px
+    ),
+    repeating-linear-gradient(
+      22.5deg,
+      rgb(0, 0, 0) 0,
+      rgb(0, 0, 0) 10px,
+      transparent 10px,
+      transparent 11px
+    ),
+    linear-gradient(
+      90deg,
+      hsl(194, 74%, 56%),
+      hsl(266, 74%, 56%),
+      hsl(338, 74%, 56%),
+      hsl(50, 74%, 56%),
+      hsl(122, 74%, 56%)
+    );
+  animation: hueShift 3s linear infinite;
+}
+
+@keyframes hueShift {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+
+  100% {
+    filter: hue-rotate(360deg);
+  }
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.2;
+  }
+
+  50% {
+    transform: translateY(-12px) scale(1.2);
+    opacity: 1;
+  }
+}
+
+:root {
+  --vh: 100%;
+}
+
+@supports (-webkit-touch-callout: none) {
+  :root {
+    --vh: 1vh;
+  }
+}
