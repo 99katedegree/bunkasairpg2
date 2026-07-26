@@ -54,7 +54,7 @@ export function Footer() {
           />
         </div>
         <div className="absolute bottom-2 z-20 w-full flex justify-center gap-3">
-          <Link className="w-18 h-auto" href="/camera">
+          <Link className="w-18 h-auto" href="/scan">
             <Image
               className="w-full h-full"
               width={100}
@@ -72,7 +72,7 @@ export function Footer() {
               alt="encyclopedia"
             />
           </Link>
-          <Link className="w-18 h-auto" href="/ranking">
+          <Link className="w-18 h-auto" href="/rankings">
             <Image
               className="w-full h-full"
               width={100}

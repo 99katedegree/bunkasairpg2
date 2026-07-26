@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useUserStore } from "@/stores/user-store";
+import { getAuthInit } from "@/utils/auth-init";
 import { useState } from "react";
 import { QrModal } from "@/components/features/profile/qr-modal/qr-modal";
 import { WeaponDrawer } from "@/components/features/battle/weapon-drawer/weapon-drawer";
@@ -12,6 +13,9 @@ import { playSound } from "@/utils/play-sound/play-sound";
 import { updateMe } from "@/lib/me/me";
 import { uploadImage } from "@/lib/image/image";
 import { WeaponResponse } from "@/lib/bunkasaiRPGAPI.schemas";
+import { BgCamera } from "@/components/shared/bg-camera";
+import { UserStatus } from "@/components/shared/user-status";
+import { UserIcon } from "@/components/shared/icons/user-icon";
 
 export default function Page() {
   const { user, setUser, items, weapons } = useUserStore();
@@ -26,16 +30,16 @@ export default function Page() {
   const handleNameChange = async (newName: string) => {
     if (newName === user.name || !newName) return;
     setName(newName);
-    await updateMe({ name: newName });
+    await updateMe({ name: newName }, getAuthInit());
     setUser({ ...user, name: newName });
   };
 
   const handleImageChange = async (imageFile?: File | null) => {
     if (!imageFile) return;
-    const res = await uploadImage({ imageFile, directory: "avatars" });
+    const res = await uploadImage({ imageFile, directory: "avatars" }, getAuthInit());
     if (res.status === 200) {
       const imageId = res.data.image.id;
-      await updateMe({ avatarImageId: imageId });
+      await updateMe({ avatarImageId: imageId }, getAuthInit());
       const reader = new FileReader();
       reader.onload = () => {
         const imageUrl = reader.result as string;
@@ -46,7 +50,7 @@ export default function Page() {
   };
 
   const handleChangeWeapon = async (weapon: WeaponResponse) => {
-    await updateMe({ equippedWeaponId: weapon.id });
+    await updateMe({ equippedWeaponId: weapon.id }, getAuthInit());
     setUser({ ...user, weapon });
     playSound("/sounds/weapon-change.mp3");
     setWeaponDrawerOpen(false);
@@ -54,6 +58,16 @@ export default function Page() {
 
   return (
     <div className="flex justify-center items-center h-[100dvh] w-screen bg-cover bg-center bg-no-repeat text-xl">
+      <BgCamera />
+      <div className="fixed top-0 w-full p-2 z-30">
+        <UserStatus
+          name={user.name}
+          imageUrl={user.avatarImageUrl ?? ""}
+          level={user.level}
+          hitPoint={user.hitPoint}
+          maxHitPoint={user.maxHitPoint}
+        />
+      </div>
       <div className="relative mt-2 mx-2 pr-1 w-full h-[490px] bg-cover bg-center bg-no-repeat flex justify-center rounded-2xl overflow-hidden">
         <Image
           className="absolute -z-10 h-full"
@@ -124,7 +138,7 @@ export default function Page() {
                     height={150}
                   />
                 ) : (
-                  <div className="w-16 h-16 bg-gray-300 rounded-full" />
+                  <UserIcon className="w-16 h-16" />
                 )}
               </div>
               <div className="absolute top-0 right-0 w-5 h-5 aspect-square z-30">

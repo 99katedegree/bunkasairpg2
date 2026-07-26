@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/99katedegree/bunkasairpg2/api/internal/domain/entity"
 	"github.com/99katedegree/bunkasairpg2/api/internal/domain/repository"
 )
 
@@ -26,6 +27,9 @@ func (u *GameUsecase) Archive(ctx context.Context) error {
 
 // Start はアーカイブ処理後に count 人の新規ユーザーを作成し、そのIDを返す。
 func (u *GameUsecase) Start(ctx context.Context, count int) ([]uuid.UUID, error) {
+	if count <= 0 {
+		return nil, entity.ErrInvalidCount
+	}
 	if err := u.Archive(ctx); err != nil {
 		return nil, err
 	}

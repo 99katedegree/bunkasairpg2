@@ -76,6 +76,10 @@ func errToCode(err error) (int, []string) {
 		return http.StatusBadRequest, []string{"ITEM_STOCKEMPTY"}
 	case errors.Is(err, entity.ErrWeaponNotOwned):
 		return http.StatusBadRequest, []string{"WEAPON_NOTOWNED"}
+	case errors.Is(err, entity.ErrNoMonsters):
+		return http.StatusUnprocessableEntity, []string{"NO_MONSTERS"}
+	case errors.Is(err, entity.ErrInvalidCount):
+		return http.StatusUnprocessableEntity, []string{"INVALID_COUNT"}
 	default:
 		return http.StatusInternalServerError, []string{"INTERNAL"}
 	}

@@ -10,7 +10,10 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-const UserIDKey = "userID"
+const (
+	UserIDKey = "userID"
+	RoleKey   = "role"
+)
 
 // echoContextKeyType はコンテキストキーの型（衝突防止）
 type echoContextKeyType struct{}
@@ -58,6 +61,14 @@ func Auth(jwtSecret string) echo.MiddlewareFunc {
 			if !ok {
 				return c.JSON(http.StatusUnauthorized, map[string][]string{"errors": {"UNAUTHORIZED"}})
 			}
+			role, _ := claims["role"].(string)
+			c.Set(RoleKey, role)
+
+			if role == "admin" {
+				return next(c)
+			}
+
+			// user role: sub は UUID
 			sub, ok := claims["sub"].(string)
 			if !ok {
 				return c.JSON(http.StatusUnauthorized, map[string][]string{"errors": {"UNAUTHORIZED"}})
@@ -76,4 +87,15 @@ func Auth(jwtSecret string) echo.MiddlewareFunc {
 func GetUserID(c echo.Context) (uuid.UUID, bool) {
 	id, ok := c.Get(UserIDKey).(uuid.UUID)
 	return id, ok
+}
+
+// GetRole は echo.Context からロールを取り出す
+func GetRole(c echo.Context) string {
+	role, _ := c.Get(RoleKey).(string)
+	return role
+}
+
+// IsAdmin は echo.Context のロールが admin かどうかを返す
+func IsAdmin(c echo.Context) bool {
+	return GetRole(c) == "admin"
 }

@@ -8,6 +8,17 @@ import QRCodeStyling from "qr-code-styling";
   (pdfFonts as any).pdfMake?.vfs ||
   (pdfFonts as any).vfs;
 
+async function toDataUrl(url: string): Promise<string> {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
 async function generateTransparentQR(url: string): Promise<string> {
   const qrCode = new QRCodeStyling({
     width: 250,
@@ -28,24 +39,28 @@ async function generateTransparentQR(url: string): Promise<string> {
 }
 
 export async function generateQrPdf(urls: string[], filename: string): Promise<void> {
-  const qrImagePromises = urls.map((url) => generateTransparentQR(url));
-  const qrDataUrls = await Promise.all(qrImagePromises);
+  const baseUrl = window.location.origin;
+  const [logoDataUrl, bgDataUrl] = await Promise.all([
+    toDataUrl(`${baseUrl}/logo.png`),
+    toDataUrl(`${baseUrl}/bg-reward.png`),
+  ]);
+
+  const qrDataUrls = await Promise.all(urls.map((url) => generateTransparentQR(url)));
 
   const content = qrDataUrls.map((dataUrl, index) => ({
     stack: [
+      {
+        image: logoDataUrl,
+        width: 480,
+        alignment: "center" as const,
+        margin: [0, 60, 0, 40] as [number, number, number, number],
+      },
       {
         image: dataUrl,
         width: 250,
         height: 250,
         alignment: "center" as const,
-        margin: [0, 80, 0, 20] as [number, number, number, number],
-      },
-      {
-        text: urls[index],
-        fontSize: 8,
-        alignment: "center" as const,
-        color: "#666666",
-        margin: [0, 0, 0, 0] as [number, number, number, number],
+        margin: [0, 0, 0, 20] as [number, number, number, number],
       },
     ],
     pageBreak: index === qrDataUrls.length - 1 ? undefined : ("after" as const),
@@ -54,6 +69,14 @@ export async function generateQrPdf(urls: string[], filename: string): Promise<v
   const docDefinition: TDocumentDefinitions = {
     pageSize: "A4",
     pageMargins: [40, 60, 40, 60],
+    background: [
+      {
+        image: bgDataUrl,
+        width: 580,
+        height: 820,
+        absolutePosition: { x: (595.28 - 580) / 2, y: (841.89 - 820) / 2 },
+      },
+    ],
     content,
   };
 

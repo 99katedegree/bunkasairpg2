@@ -112,3 +112,11 @@ html.admin::before {
     --vh: 1vh;
   }
 }
+
+.admin-input:-webkit-autofill,
+.admin-input:-webkit-autofill:hover,
+.admin-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--color-zinc-900) inset;
+  -webkit-text-fill-color: var(--color-zinc-100);
+  caret-color: var(--color-zinc-100);
+}

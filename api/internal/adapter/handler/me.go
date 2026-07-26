@@ -51,6 +51,16 @@ func (s *Server) GetMe(ctx context.Context, req genapi.GetMeRequestObject) (gena
 			PhysicsType:   genapi.PhysicsType(w.PhysicsType),
 			ElementType:   genapi.ElementType(w.ElementType),
 		}
+	} else {
+		ea := float32(0)
+		resp.Weapon = &genapi.WeaponResponse{
+			Id:            0,
+			Name:          "素手",
+			PhysicsAttack: 10,
+			ElementAttack: &ea,
+			PhysicsType:   genapi.Blow,
+			ElementType:   genapi.Neutral,
+		}
 	}
 
 	return genapi.GetMe200JSONResponse{User: resp}, nil

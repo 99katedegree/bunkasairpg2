@@ -12,4 +12,6 @@ var (
 	ErrItemNotFound   = errors.New("item not found")
 	ErrItemStockEmpty = errors.New("item stock empty")
 	ErrWeaponNotOwned = errors.New("weapon not owned")
+	ErrNoMonsters     = errors.New("no monsters registered")
+	ErrInvalidCount   = errors.New("count must be greater than 0")
 )

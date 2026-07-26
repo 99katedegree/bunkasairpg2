@@ -2,9 +2,12 @@
 
 import { useZxing } from "react-zxing";
 import { useRouter } from "next/navigation";
+import { useUserStore } from "@/stores/user-store";
+import { UserStatus } from "@/components/shared/user-status";
 
 export default function Page() {
   const router = useRouter();
+  const { user } = useUserStore();
   const { ref } = useZxing({
     onDecodeResult(result) {
       const text = result.rawValue;
@@ -14,7 +17,7 @@ export default function Page() {
         if (
           url.origin === currentOrigin &&
           (url.pathname.startsWith("/battles") ||
-            url.pathname.startsWith("/auth/user-login"))
+            url.pathname.startsWith("/login"))
         ) {
           router.push(url.pathname + url.search + url.hash);
         }
@@ -33,6 +36,16 @@ export default function Page() {
           autoPlay
           muted
           playsInline
+        />
+      </div>
+
+      <div className="fixed top-0 w-full p-2">
+        <UserStatus
+          name={user?.name ?? null}
+          imageUrl={user?.avatarImageUrl ?? ""}
+          level={user?.level ?? 0}
+          hitPoint={user?.hitPoint ?? 0}
+          maxHitPoint={user?.maxHitPoint ?? 0}
         />
       </div>
 

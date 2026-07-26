@@ -21,11 +21,11 @@ export default function Page() {
           });
           window.location.href = "/scan";
         } else {
-          window.location.href = "/scan?notLoggedIn=1";
+          window.location.href = "/?notLoggedIn=1";
         }
       })
       .catch(() => {
-        window.location.href = "/scan?notLoggedIn=1";
+        window.location.href = "/?notLoggedIn=1";
       });
   }, [userId]);
 

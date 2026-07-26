@@ -18,7 +18,7 @@ export function QrModal({ setOpen, userId }: Props) {
         className="w-[80%] aspect-square rounded-3xl bg-white flex justify-center items-center"
       >
         <QRCodeSVG
-          value={`${window.location.origin}/auth/user-login/${userId}`}
+          value={`${window.location.origin}/login/${userId}`}
           className="w-[80%] h-[80%]"
         />
       </div>

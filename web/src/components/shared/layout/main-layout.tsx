@@ -2,11 +2,14 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import Cookies from "js-cookie";
 import { getMe } from "@/lib/me/me";
+import { getAuthInit } from "@/utils/auth-init";
 import { getMeWeaponIndex } from "@/lib/weapon/weapon";
 import { getMeItemIndex } from "@/lib/item/item";
 import { useUserStore } from "@/stores/user-store";
 import { LoadingScreen } from "@/components/shared/loading-screen";
+import { Footer } from "@/components/shared/footer";
 import type { WeaponResponse, UserItemResponse } from "@/lib/bunkasaiRPGAPI.schemas";
 
 type Props = {
@@ -29,11 +32,16 @@ export function MainLayout({ children }: Props) {
     if (isPublicPath) return;
 
     const fetchData = async () => {
+      if (!Cookies.get("authToken")) {
+        router.push("/?notLoggedIn=1");
+        return;
+      }
+
       try {
         const [meRes, weaponsRes, itemsRes] = await Promise.all([
-          getMe(),
-          getMeWeaponIndex(),
-          getMeItemIndex(),
+          getMe(getAuthInit()),
+          getMeWeaponIndex(undefined, getAuthInit()),
+          getMeItemIndex(undefined, getAuthInit()),
         ]);
 
         if (meRes.status === 200 && "user" in meRes.data) {
@@ -76,5 +84,10 @@ export function MainLayout({ children }: Props) {
     return <LoadingScreen />;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <Footer />
+    </>
+  );
 }

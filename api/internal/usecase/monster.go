@@ -32,6 +32,9 @@ func (u *MonsterUsecase) GetBattleTokens(ctx context.Context) ([]string, error) 
 	if err != nil {
 		return nil, err
 	}
+	if len(ids) == 0 {
+		return nil, entity.ErrNoMonsters
+	}
 	tokens := make([]string, 0, len(ids))
 	for _, id := range ids {
 		token, err := u.battleToken.Encrypt(id)

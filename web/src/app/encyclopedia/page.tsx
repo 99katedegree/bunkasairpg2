@@ -10,9 +10,14 @@ import {
 import { MonsterCard } from "@/components/features/battle/monster-card/monster-card";
 import { WeaponCard } from "@/components/features/battle/weapon-card/weapon-card";
 import { ItemCard } from "@/components/features/battle/item-card/item-card";
+import { AssetTypeIcon } from "@/components/shared/asset-type-icon";
+import { BgCamera } from "@/components/shared/bg-camera";
+import { QuestionIcon } from "@/components/shared/icons/question-icon";
+import { Modal } from "@/components/shared/modal";
 import { assetBgColor } from "@/utils/asset-bg-color";
 import Image from "next/image";
 import Link from "next/link";
+import { getAuthInit } from "@/utils/auth-init";
 import { useEffect, useState } from "react";
 import { getMonster, getMonsters } from "@/lib/monster/monster";
 import { getMeWeaponIndex } from "@/lib/weapon/weapon";
@@ -38,19 +43,19 @@ export default function Page() {
     const limit = PAGE_SIZE;
 
     if (category === "monster") {
-      getMonsters({ offset, limit }).then((res) => {
+      getMonsters({ offset, limit }, getAuthInit()).then((res) => {
         if (res.status !== 200) return;
         setMonsterIndex(res.data.monsters);
         setTotalPage(Math.ceil(res.data.total / PAGE_SIZE));
       });
     } else if (category === "weapon") {
-      getMeWeaponIndex({ offset, limit }).then((res) => {
+      getMeWeaponIndex({ offset, limit }, getAuthInit()).then((res) => {
         if (res.status !== 200) return;
         setWeaponIndex(res.data.weapons);
         setTotalPage(Math.ceil(res.data.total / PAGE_SIZE));
       });
     } else if (category === "item") {
-      getMeItemIndex({ offset, limit }).then((res) => {
+      getMeItemIndex({ offset, limit }, getAuthInit()).then((res) => {
         if (res.status !== 200) return;
         setItemIndex(res.data.items);
         setTotalPage(Math.ceil(res.data.total / PAGE_SIZE));
@@ -60,6 +65,7 @@ export default function Page() {
 
   return (
     <>
+      <BgCamera />
       <div className="h-[100dvh] w-screen bg-cover bg-center bg-no-repeat flex flex-col items-center font-dotgothic">
         <div className="h-full w-full flex flex-col items-center justify-end">
           <h1 className="text-xl text-white">図鑑</h1>
@@ -157,7 +163,7 @@ export default function Page() {
                       className="bg-neutral relative p-1 rounded-2xl shadow-lg h-fit"
                       onClick={() => {
                         if (m === null) return;
-                        getMonster(m.id).then((res) => {
+                        getMonster(m.id, getAuthInit()).then((res) => {
                           if (res.status === 200) setMonster(res.data.monster);
                         });
                       }}
@@ -168,7 +174,7 @@ export default function Page() {
                         </div>
                       ) : (
                         <div className="bg-gray-300 aspect-square rounded-xl flex items-center justify-center overflow-hidden">
-                          <div className="text-white text-4xl">?</div>
+                          <QuestionIcon className="text-white w-16 h-16" />
                         </div>
                       )}
                     </div>
@@ -191,10 +197,14 @@ export default function Page() {
                       {w ? (
                         <div className="relative bg-gray-300 rounded-xl aspect-square flex items-center overflow-hidden">
                           <div className="w-full h-full bg-gray-300 rounded-xl" />
+                          <div className="absolute w-full px-2 bottom-2 flex gap-2 z-10 justify-end">
+                            <AssetTypeIcon type={w.physicsType} size="35%" />
+                            <AssetTypeIcon type={w.elementType} size="35%" />
+                          </div>
                         </div>
                       ) : (
                         <div className="bg-gray-300 aspect-square rounded-xl flex items-center justify-center overflow-hidden">
-                          <div className="text-white text-4xl">?</div>
+                          <QuestionIcon className="text-white w-16 h-16" />
                         </div>
                       )}
                     </div>
@@ -217,10 +227,13 @@ export default function Page() {
                       {i ? (
                         <div className="relative bg-gray-300 rounded-xl aspect-square flex items-center overflow-hidden">
                           <div className="w-full h-full bg-gray-300 rounded-xl" />
+                          <div className="absolute w-full px-2 bottom-2 flex gap-2 z-10 justify-end">
+                            <AssetTypeIcon type={i.effectType} size="35%" />
+                          </div>
                         </div>
                       ) : (
                         <div className="bg-gray-300 aspect-square rounded-xl flex items-center justify-center overflow-hidden">
-                          <div className="text-white text-4xl">?</div>
+                          <QuestionIcon className="text-white w-16 h-16" />
                         </div>
                       )}
                     </div>
@@ -282,40 +295,28 @@ export default function Page() {
       </div>
 
       {monster && (
-        <div
-          className="fixed inset-0 z-30 flex items-center justify-center"
-          onClick={() => setMonster(null)}
-        >
-          <div className="absolute inset-0 bg-black/70" />
-          <div className="absolute w-screen px-2 text-white">
+        <Modal onClose={() => setMonster(null)}>
+          <div className="w-screen px-2 text-white">
             <div className="w-full bg-black/70 p-10 rounded-2xl">
               <MonsterCard monster={monster} setMonster={setMonster} />
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {weapon && (
-        <div
-          className="fixed inset-0 z-30 flex items-center justify-center"
-          onClick={() => setWeapon(null)}
-        >
-          <div className="absolute inset-0 bg-black/70" />
-          <div className="absolute w-screen px-2 text-white">
+        <Modal onClose={() => setWeapon(null)}>
+          <div className="w-screen px-2 text-white">
             <div className="w-full bg-black/70 p-4 rounded-2xl">
               <WeaponCard weapon={weapon} />
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {item && (
-        <div
-          className="fixed inset-0 z-30 flex items-center justify-center"
-          onClick={() => setItem(null)}
-        >
-          <div className="absolute inset-0 bg-black/70" />
-          <div className="absolute w-screen px-2 text-white">
+        <Modal onClose={() => setItem(null)}>
+          <div className="w-screen px-2 text-white">
             <div className="w-full bg-black/70 p-4 rounded-2xl">
               <ItemCard
                 item={{
@@ -325,7 +326,7 @@ export default function Page() {
               />
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </>
   );
