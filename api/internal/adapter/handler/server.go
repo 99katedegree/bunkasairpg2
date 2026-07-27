@@ -4,10 +4,10 @@ import (
 	"errors"
 	"net/http"
 
+	genapi "github.com/99katedegree/bunkasairpg2/api/gen/api"
 	"github.com/99katedegree/bunkasairpg2/api/internal/domain/battle"
 	"github.com/99katedegree/bunkasairpg2/api/internal/domain/battletoken"
 	"github.com/99katedegree/bunkasairpg2/api/internal/domain/entity"
-	genapi "github.com/99katedegree/bunkasairpg2/api/gen/api"
 	"github.com/99katedegree/bunkasairpg2/api/internal/usecase"
 )
 

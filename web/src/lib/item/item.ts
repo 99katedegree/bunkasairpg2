@@ -12,6 +12,7 @@ import type {
 } from 'swr';
 
 import type {
+  GetItemIds200,
   GetItems200,
   GetMeItemIndex200,
   GetMeItemIndexParams,
@@ -170,6 +171,80 @@ export const useGetMeItemIndex = <TError = Promise<UnauthorizedResponse>>(
   const isEnabled = swrOptions?.enabled !== false
   const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetMeItemIndexKey(params) : null);
   const swrFn = () => getMeItemIndex(params, fetchOptions)
+
+  const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions)
+
+  return {
+    swrKey,
+    ...query
+  }
+}
+export type getItemIdsResponse200 = {
+  data: GetItemIds200
+  status: 200
+}
+
+export type getItemIdsResponse401 = {
+  data: UnauthorizedResponse
+  status: 401
+}
+
+export type getItemIdsResponseSuccess = (getItemIdsResponse200) & {
+  headers: Headers;
+};
+export type getItemIdsResponseError = (getItemIdsResponse401) & {
+  headers: Headers;
+};
+
+export type getItemIdsResponse = (getItemIdsResponseSuccess | getItemIdsResponseError)
+
+export const getGetItemIdsUrl = () => {
+
+
+
+
+  return `http://localhost:8085/items/ids`
+}
+
+/**
+ * @summary [管理者専用] 全アイテムID一覧取得
+ */
+export const getItemIds = async ( options?: RequestInit): Promise<getItemIdsResponse> => {
+
+  const res = await fetch(getGetItemIdsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getItemIdsResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getItemIdsResponse
+}
+
+
+
+
+export const getGetItemIdsKey = () => [`http://localhost:8085/items/ids`] as const;
+
+export type GetItemIdsQueryResult = NonNullable<Awaited<ReturnType<typeof getItemIds>>>
+
+/**
+ * @summary [管理者専用] 全アイテムID一覧取得
+ */
+export const useGetItemIds = <TError = Promise<UnauthorizedResponse>>(
+   options?: { swr?:SWRConfiguration<Awaited<ReturnType<typeof getItemIds>>, TError> & { swrKey?: Key, enabled?: boolean }, fetch?: RequestInit }
+) => {
+  const {swr: swrOptions, fetch: fetchOptions} = options ?? {}
+
+  const isEnabled = swrOptions?.enabled !== false
+  const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetItemIdsKey() : null);
+  const swrFn = () => getItemIds(fetchOptions)
 
   const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions)
 

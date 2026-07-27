@@ -1,6 +1,6 @@
 -- name: CreateBattle :exec
-INSERT INTO battles (id, user_id, monster_id, seed, status, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, NOW(), NOW());
+INSERT INTO battles (id, user_id, monster_id, start_weapon_id, seed, status, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW());
 
 -- name: GetBattleByID :one
 SELECT * FROM battles WHERE id = ? LIMIT 1;

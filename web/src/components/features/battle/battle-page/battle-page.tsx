@@ -57,11 +57,12 @@ type Props = {
     setBattlePhase: (bp: BattlePhase) => void,
     setMonster: (m: MonsterDetailResponse & { maxHitPoint: number; imageUrl?: string }) => void
   ) => BattleLog[];
-  onVictory?: (battle: Battle) => Promise<VictoryResult>;
+  // 報酬はサーバーが決めるため必須。クライアント側で計算する経路は持たない。
+  onVictory: (battle: Battle) => Promise<VictoryResult>;
 };
 
 export function BattlePage({ battle, monsterAttackLogs, onVictory }: Props) {
-  const { user, setUser, weapons, setWeapons, items, setItems } =
+  const { user, setUser, weapons, items, setItems } =
     useUserStore();
   const router = useRouter();
   const pathname = usePathname();
@@ -177,7 +178,7 @@ export function BattlePage({ battle, monsterAttackLogs, onVictory }: Props) {
       return;
     }
 
-    if (onVictory) {
+    {
       const rewardPromise = onVictory(battle);
       logs.push({
         message: `${monster.name}を\n倒した！`,
@@ -201,61 +202,6 @@ export function BattlePage({ battle, monsterAttackLogs, onVictory }: Props) {
               hitPoint: rewardData.hitPoint,
               maxHitPoint: rewardData.hitPoint,
             });
-          });
-        },
-      });
-    } else {
-      const rewardData = battle.reward(weapons.map((weapon) => weapon.id));
-      let drop: Drop | null = null;
-      if (rewardData.drop === "weapon" && monster.weapon) {
-        drop = {
-          type: "weapon",
-          physicsType: monster.weapon.physicsType,
-          elementType: monster.weapon.elementType,
-        };
-        setWeapons([...weapons, monster.weapon]);
-      }
-      if (rewardData.drop === "item" && monster.item) {
-        drop = {
-          type: "item",
-          effectType: monster.item.effectType,
-        };
-        const existingItem = items.find((item) => item.id === monster.item!.id);
-        if (existingItem) {
-          setItems(
-            items.map((item) =>
-              item.id === monster.item!.id
-                ? { ...item, count: item.count + 1 }
-                : item
-            )
-          );
-        } else {
-          setItems([
-            ...items,
-            { ...monster.item, count: 1 } as UserItemResponse,
-          ]);
-        }
-      }
-      logs.push({
-        message: `${monster.name}を\n倒した！`,
-        action: () => {
-          const clearTime = startDate
-            ? formatDuration(startDate, new Date())
-            : "??:??:??";
-          setReward({
-            restLevel: user.level,
-            restExperiencePoint: user.experiencePoint,
-            level: rewardData.level,
-            experiencePoint: rewardData.experiencePoint,
-            drop: drop,
-            clearTime,
-          });
-          setUser({
-            ...user,
-            level: rewardData.level,
-            experiencePoint: rewardData.experiencePoint,
-            hitPoint: rewardData.hitPoint,
-            maxHitPoint: rewardData.hitPoint,
           });
         },
       });
@@ -718,13 +664,3 @@ function formatMilliseconds(ms: number): string {
   )}:${String(centiseconds).padStart(2, "0")}`;
 }
 
-function formatDuration(startDate: Date, endDate: Date): string {
-  const diff = endDate.getTime() - startDate.getTime();
-  const minutes = Math.floor(diff / 60000);
-  const seconds = Math.floor((diff % 60000) / 1000);
-  const milliseconds = Math.floor((diff % 1000) / 10);
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
-    2,
-    "0"
-  )}:${String(milliseconds).padStart(2, "0")}`;
-}

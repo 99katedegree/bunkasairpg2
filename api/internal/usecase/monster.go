@@ -11,8 +11,8 @@ import (
 )
 
 type MonsterUsecase struct {
-	monsterRepo  repository.MonsterRepository
-	battleToken  *battletoken.BattleToken
+	monsterRepo repository.MonsterRepository
+	battleToken *battletoken.BattleToken
 }
 
 func NewMonsterUsecase(monsterRepo repository.MonsterRepository, bt *battletoken.BattleToken) *MonsterUsecase {
@@ -25,6 +25,18 @@ func (u *MonsterUsecase) GetDetail(ctx context.Context, monsterID uuid.UUID) (*e
 
 func (u *MonsterUsecase) GetCatalog(ctx context.Context, userID uuid.UUID, offset, limit int) ([]*entity.MonsterCatalogEntry, int64, error) {
 	return u.monsterRepo.FindCatalogByUserID(ctx, userID, offset, limit)
+}
+
+func (u *MonsterUsecase) GetAllIDs(ctx context.Context) ([]string, error) {
+	ids, err := u.monsterRepo.FindAllIDs(ctx)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]string, 0, len(ids))
+	for _, id := range ids {
+		result = append(result, id.String())
+	}
+	return result, nil
 }
 
 func (u *MonsterUsecase) GetBattleTokens(ctx context.Context) ([]string, error) {

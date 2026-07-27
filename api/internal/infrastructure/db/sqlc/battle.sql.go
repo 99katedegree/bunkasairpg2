@@ -11,16 +11,17 @@ import (
 )
 
 const createBattle = `-- name: CreateBattle :exec
-INSERT INTO battles (id, user_id, monster_id, seed, status, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, NOW(), NOW())
+INSERT INTO battles (id, user_id, monster_id, start_weapon_id, seed, status, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
 `
 
 type CreateBattleParams struct {
-	ID        string         `db:"id" json:"id"`
-	UserID    string         `db:"user_id" json:"user_id"`
-	MonsterID sql.NullString `db:"monster_id" json:"monster_id"`
-	Seed      int64          `db:"seed" json:"seed"`
-	Status    string         `db:"status" json:"status"`
+	ID            string         `db:"id" json:"id"`
+	UserID        string         `db:"user_id" json:"user_id"`
+	MonsterID     sql.NullString `db:"monster_id" json:"monster_id"`
+	StartWeaponID sql.NullInt64  `db:"start_weapon_id" json:"start_weapon_id"`
+	Seed          int64          `db:"seed" json:"seed"`
+	Status        string         `db:"status" json:"status"`
 }
 
 func (q *Queries) CreateBattle(ctx context.Context, arg CreateBattleParams) error {
@@ -28,6 +29,7 @@ func (q *Queries) CreateBattle(ctx context.Context, arg CreateBattleParams) erro
 		arg.ID,
 		arg.UserID,
 		arg.MonsterID,
+		arg.StartWeaponID,
 		arg.Seed,
 		arg.Status,
 	)
@@ -35,7 +37,7 @@ func (q *Queries) CreateBattle(ctx context.Context, arg CreateBattleParams) erro
 }
 
 const getBattleByID = `-- name: GetBattleByID :one
-SELECT id, user_id, monster_id, seed, status, created_at, updated_at FROM battles WHERE id = ? LIMIT 1
+SELECT id, user_id, monster_id, seed, status, created_at, updated_at, start_weapon_id FROM battles WHERE id = ? LIMIT 1
 `
 
 func (q *Queries) GetBattleByID(ctx context.Context, id string) (Battle, error) {
@@ -49,6 +51,7 @@ func (q *Queries) GetBattleByID(ctx context.Context, id string) (Battle, error) 
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.StartWeaponID,
 	)
 	return i, err
 }

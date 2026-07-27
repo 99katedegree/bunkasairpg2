@@ -9,6 +9,7 @@ import (
 )
 
 type ItemRepository interface {
+	FindAllIDs(ctx context.Context) ([]int64, error)
 	FindByID(ctx context.Context, id int64) (*entity.Item, error)
 	FindByUserID(ctx context.Context, userID uuid.UUID) ([]*entity.UserItem, error)
 	FindIndexByUserID(ctx context.Context, userID uuid.UUID, offset, limit int) ([]*entity.Item, int64, error)

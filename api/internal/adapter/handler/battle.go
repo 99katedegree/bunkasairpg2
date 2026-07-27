@@ -67,9 +67,9 @@ func (s *Server) FinishBattle(ctx context.Context, req genapi.FinishBattleReques
 	if result.DropWeaponID != nil {
 		wid := *result.DropWeaponID
 		resp.Drop = &struct {
-			ItemId   *int                                 `json:"itemId,omitempty"`
+			ItemId   *int                                `json:"itemId,omitempty"`
 			Type     genapi.BattleRewardResponseDropType `json:"type"`
-			WeaponId *int                                 `json:"weaponId,omitempty"`
+			WeaponId *int                                `json:"weaponId,omitempty"`
 		}{
 			Type:     genapi.Weapon,
 			WeaponId: &wid,
@@ -77,9 +77,9 @@ func (s *Server) FinishBattle(ctx context.Context, req genapi.FinishBattleReques
 	} else if result.DropItemID != nil {
 		iid := *result.DropItemID
 		resp.Drop = &struct {
-			ItemId   *int                                 `json:"itemId,omitempty"`
+			ItemId   *int                                `json:"itemId,omitempty"`
 			Type     genapi.BattleRewardResponseDropType `json:"type"`
-			WeaponId *int                                 `json:"weaponId,omitempty"`
+			WeaponId *int                                `json:"weaponId,omitempty"`
 		}{
 			Type:   genapi.Item,
 			ItemId: &iid,

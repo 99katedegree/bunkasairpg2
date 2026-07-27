@@ -1,3 +1,6 @@
+-- name: GetAllItemIDs :many
+SELECT id FROM items ORDER BY id;
+
 -- name: GetItemByID :one
 SELECT i.id, i.name, i.index_number, i.effect_type, i.created_at, i.updated_at,
     hi.amount, bi.rate as buff_rate, bi.target as buff_target, di.rate as debuff_rate, di.target as debuff_target

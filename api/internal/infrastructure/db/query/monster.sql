@@ -1,6 +1,6 @@
 -- name: GetMonsterByID :one
 SELECT m.id, m.weapon_id, m.item_id, m.index_number, m.name, m.attack, m.hit_point, m.experience_point,
-    m.slash, m.blow, m.shoot, m.neutral, m.flame, m.water, m.wood, m.shine, m.dark,
+    m.recommended_level, m.slash, m.blow, m.shoot, m.neutral, m.flame, m.water, m.wood, m.shine, m.dark,
     m.created_at, m.updated_at,
     w.id as weapon_id_j, w.name as weapon_name, w.index_number as weapon_index_number,
     w.physics_attack, w.element_attack, w.physics_type, w.element_type,

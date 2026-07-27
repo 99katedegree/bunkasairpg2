@@ -14,6 +14,7 @@ import type {
 import type {
   GetMeWeaponIndex200,
   GetMeWeaponIndexParams,
+  GetWeaponIds200,
   GetWeapons200,
   UnauthorizedResponse
 } from '../bunkasaiRPGAPI.schemas';
@@ -170,6 +171,80 @@ export const useGetMeWeaponIndex = <TError = Promise<UnauthorizedResponse>>(
   const isEnabled = swrOptions?.enabled !== false
   const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetMeWeaponIndexKey(params) : null);
   const swrFn = () => getMeWeaponIndex(params, fetchOptions)
+
+  const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions)
+
+  return {
+    swrKey,
+    ...query
+  }
+}
+export type getWeaponIdsResponse200 = {
+  data: GetWeaponIds200
+  status: 200
+}
+
+export type getWeaponIdsResponse401 = {
+  data: UnauthorizedResponse
+  status: 401
+}
+
+export type getWeaponIdsResponseSuccess = (getWeaponIdsResponse200) & {
+  headers: Headers;
+};
+export type getWeaponIdsResponseError = (getWeaponIdsResponse401) & {
+  headers: Headers;
+};
+
+export type getWeaponIdsResponse = (getWeaponIdsResponseSuccess | getWeaponIdsResponseError)
+
+export const getGetWeaponIdsUrl = () => {
+
+
+
+
+  return `http://localhost:8085/weapons/ids`
+}
+
+/**
+ * @summary [管理者専用] 全武器ID一覧取得
+ */
+export const getWeaponIds = async ( options?: RequestInit): Promise<getWeaponIdsResponse> => {
+
+  const res = await fetch(getGetWeaponIdsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getWeaponIdsResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getWeaponIdsResponse
+}
+
+
+
+
+export const getGetWeaponIdsKey = () => [`http://localhost:8085/weapons/ids`] as const;
+
+export type GetWeaponIdsQueryResult = NonNullable<Awaited<ReturnType<typeof getWeaponIds>>>
+
+/**
+ * @summary [管理者専用] 全武器ID一覧取得
+ */
+export const useGetWeaponIds = <TError = Promise<UnauthorizedResponse>>(
+   options?: { swr?:SWRConfiguration<Awaited<ReturnType<typeof getWeaponIds>>, TError> & { swrKey?: Key, enabled?: boolean }, fetch?: RequestInit }
+) => {
+  const {swr: swrOptions, fetch: fetchOptions} = options ?? {}
+
+  const isEnabled = swrOptions?.enabled !== false
+  const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetWeaponIdsKey() : null);
+  const swrFn = () => getWeaponIds(fetchOptions)
 
   const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions)
 

@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	dbgen "github.com/99katedegree/bunkasairpg2/api/internal/infrastructure/db/sqlc"
 	"github.com/99katedegree/bunkasairpg2/api/internal/domain/entity"
+	dbgen "github.com/99katedegree/bunkasairpg2/api/internal/infrastructure/db/sqlc"
 )
 
 type adminRepository struct {

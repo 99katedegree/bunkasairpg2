@@ -63,6 +63,10 @@ func itemFromRow(id int64, name, indexNumber, effectType string, createdAt, upda
 	return item
 }
 
+func (r *itemRepository) FindAllIDs(ctx context.Context) ([]int64, error) {
+	return r.q.GetAllItemIDs(ctx)
+}
+
 func (r *itemRepository) FindByID(ctx context.Context, id int64) (*entity.Item, error) {
 	row, err := r.q.GetItemByID(ctx, id)
 	if err != nil {

@@ -31,6 +31,9 @@ func (r *battleRepository) Create(ctx context.Context, b *entity.Battle) error {
 	if b.MonsterID != nil {
 		params.MonsterID = sql.NullString{String: b.MonsterID.String(), Valid: true}
 	}
+	if b.StartWeaponID != nil {
+		params.StartWeaponID = sql.NullInt64{Int64: *b.StartWeaponID, Valid: true}
+	}
 	return r.q.CreateBattle(ctx, params)
 }
 
@@ -67,6 +70,10 @@ func (r *battleRepository) FindByToken(ctx context.Context, token uuid.UUID) (*e
 			return nil, err
 		}
 		b.MonsterID = &monsterID
+	}
+	if row.StartWeaponID.Valid {
+		weaponID := row.StartWeaponID.Int64
+		b.StartWeaponID = &weaponID
 	}
 
 	return b, nil

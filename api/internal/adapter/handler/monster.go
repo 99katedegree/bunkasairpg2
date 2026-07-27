@@ -45,6 +45,19 @@ func (s *Server) GetMonsters(ctx context.Context, req genapi.GetMonstersRequestO
 	return genapi.GetMonsters200JSONResponse{Monsters: resp, Total: int(total)}, nil
 }
 
+func (s *Server) GetMonsterIds(ctx context.Context, req genapi.GetMonsterIdsRequestObject) (genapi.GetMonsterIdsResponseObject, error) {
+	echoCtx, ok := mw.GetEchoContext(ctx)
+	if !ok || !mw.IsAdmin(echoCtx) {
+		return genapi.GetMonsterIds401JSONResponse{UnauthorizedJSONResponse: genapi.UnauthorizedJSONResponse{Errors: []string{"UNAUTHORIZED"}}}, nil
+	}
+	ids, err := s.monsterUC.GetAllIDs(ctx)
+	if err != nil {
+		_, body := errResponse(err)
+		return genapi.GetMonsterIds401JSONResponse{UnauthorizedJSONResponse: genapi.UnauthorizedJSONResponse{Errors: body.Errors}}, nil
+	}
+	return genapi.GetMonsterIds200JSONResponse{Ids: ids}, nil
+}
+
 func (s *Server) GetMonsterBattleTokens(ctx context.Context, req genapi.GetMonsterBattleTokensRequestObject) (genapi.GetMonsterBattleTokensResponseObject, error) {
 	echoCtx, ok := mw.GetEchoContext(ctx)
 	if !ok || !mw.IsAdmin(echoCtx) {
@@ -78,11 +91,12 @@ func (s *Server) GetMonster(ctx context.Context, req genapi.GetMonsterRequestObj
 	}
 
 	detail := genapi.MonsterDetailResponse{
-		Id:              monster.ID,
-		Name:            monster.Name,
-		HitPoint:        monster.HitPoint,
-		Attack:          monster.Attack,
-		ExperiencePoint: monster.ExperiencePoint,
+		Id:               monster.ID,
+		Name:             monster.Name,
+		HitPoint:         monster.HitPoint,
+		Attack:           monster.Attack,
+		ExperiencePoint:  monster.ExperiencePoint,
+		RecommendedLevel: monster.RecommendedLevel,
 	}
 
 	if monster.Slash != 0 {

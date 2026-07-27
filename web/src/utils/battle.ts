@@ -1,9 +1,6 @@
-import { updateMe } from "@/lib/me/me";
-import { useMeItem, changeMeWeapon } from "@/lib/action/action";
-import { startBattle, finishBattle } from "@/lib/battle/battle";
+import { changeMeWeapon } from "@/lib/action/action";
 import type { ElementType } from "@/types/element-type";
 import type { PhysicsType } from "@/types/physics-type";
-import { calculateLevel } from "./calculate-level";
 import type { MonsterDetailResponse } from "@/lib/bunkasaiRPGAPI.schemas";
 import type { BattleAction } from "@/lib/bunkasaiRPGAPI.schemas";
 
@@ -81,10 +78,6 @@ export class Battle {
     this.monster = monster;
     this.isBoss = isBoss;
     this.rng = rng;
-
-    if (!this.isBoss) {
-      startBattle({ monsterToken: this.monster.id });
-    }
   }
 
   public getActions(): BattleAction[] {
@@ -148,9 +141,7 @@ export class Battle {
         ? Math.min(this.monster.hitPoint - damage, this.monster.maxHitPoint)
         : Math.max(this.monster.hitPoint - damage, 0);
 
-    if (this.isBoss) {
-      this.actions.push({ turn: this.actionCount++, type: "attack" });
-    }
+    this.actions.push({ turn: this.actionCount++, type: "attack" });
 
     return {
       monsterHitPoint: this.monster.hitPoint,
@@ -165,18 +156,11 @@ export class Battle {
   public changeWeapon(weapon: Weapon): void {
     this.user.weapon = weapon;
     changeMeWeapon({ weaponId: weapon.id });
-    if (this.isBoss) {
-      this.actions.push({ turn: this.actionCount++, type: "change-weapon", weaponId: weapon.id });
-    }
+    this.actions.push({ turn: this.actionCount++, type: "change-weapon", weaponId: weapon.id });
   }
 
   public useHealItem(item: HeelItem): void {
-    if (!this.isBoss) {
-      useMeItem({ itemId: item.id });
-    }
-    if (this.isBoss) {
-      this.actions.push({ turn: this.actionCount++, type: "use-item", itemId: item.id });
-    }
+    this.actions.push({ turn: this.actionCount++, type: "use-item", itemId: item.id });
     this.user.hitPoint = Math.min(
       this.user.hitPoint + (item.amount ?? 0),
       this.user.maxHitPoint
@@ -184,12 +168,7 @@ export class Battle {
   }
 
   public useBuffItem(item: BuffItem): void {
-    if (!this.isBoss) {
-      useMeItem({ itemId: item.id });
-    }
-    if (this.isBoss) {
-      this.actions.push({ turn: this.actionCount++, type: "use-item", itemId: item.id });
-    }
+    this.actions.push({ turn: this.actionCount++, type: "use-item", itemId: item.id });
     if (item.target && item.rate !== undefined) {
       const target = item.target as keyof typeof this.buffs;
       if (target in this.buffs) {
@@ -199,12 +178,7 @@ export class Battle {
   }
 
   public useDebuffItem(item: DebuffItem): void {
-    if (!this.isBoss) {
-      useMeItem({ itemId: item.id });
-    }
-    if (this.isBoss) {
-      this.actions.push({ turn: this.actionCount++, type: "use-item", itemId: item.id });
-    }
+    this.actions.push({ turn: this.actionCount++, type: "use-item", itemId: item.id });
     if (item.target && item.rate !== undefined) {
       const target = item.target as keyof typeof this.debuffs;
       if (target in this.debuffs) {
@@ -229,49 +203,4 @@ export class Battle {
     };
   }
 
-  public reward(weaponIds: number[]): {
-    level: number;
-    hitPoint: number;
-    experiencePoint: number;
-    drop: "weapon" | "item" | null;
-  } {
-    let drop: "weapon" | "item" | null = null;
-    if (
-      this.monster.weapon?.id &&
-      !weaponIds.includes(this.monster.weapon.id)
-    ) {
-      drop = "weapon";
-    } else if (this.monster.item?.id) {
-      drop = "item";
-    }
-
-    const level = calculateLevel(
-      this.user.experiencePoint + this.monster.experiencePoint
-    );
-    if (this.user.level < level) {
-      const increasedHitPoint = Array.from({
-        length: level - this.user.level,
-      }).reduce<number>(
-        (sum) => sum + [6, 7, 8, 9, 10][Math.floor(Math.random() * 5)],
-        0
-      );
-      this.user.level = level;
-      this.user.maxHitPoint += increasedHitPoint;
-    }
-    this.user.experiencePoint += this.monster.experiencePoint;
-    if (process.env.NEXT_PUBLIC_ALLOW_LEVEL_UP === "true") {
-      updateMe({
-        level: this.user.level,
-        hitPoint: this.user.maxHitPoint,
-        experiencePoint: this.user.experiencePoint,
-      });
-    }
-
-    return {
-      level: this.user.level,
-      hitPoint: this.user.maxHitPoint,
-      experiencePoint: this.user.experiencePoint,
-      drop: drop,
-    };
-  }
 }

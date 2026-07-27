@@ -39,6 +39,10 @@ func weaponFromDB(w dbgen.Weapon) *entity.Weapon {
 	return e
 }
 
+func (r *weaponRepository) FindAllIDs(ctx context.Context) ([]int64, error) {
+	return r.q.GetAllWeaponIDs(ctx)
+}
+
 func (r *weaponRepository) FindByID(ctx context.Context, id int64) (*entity.Weapon, error) {
 	row, err := r.q.GetWeaponByID(ctx, id)
 	if err != nil {

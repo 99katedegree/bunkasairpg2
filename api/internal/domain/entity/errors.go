@@ -14,4 +14,6 @@ var (
 	ErrWeaponNotOwned = errors.New("weapon not owned")
 	ErrNoMonsters     = errors.New("no monsters registered")
 	ErrInvalidCount   = errors.New("count must be greater than 0")
+
+	ErrInvalidResistance = errors.New("resistance out of range")
 )

@@ -37,10 +37,10 @@ type ItemParams struct {
 }
 
 type MonsterParams struct {
-	Attack          int
-	HitPoint        int
-	MaxHitPoint     int
-	ExperiencePoint int
+	Attack                      int
+	HitPoint                    int
+	MaxHitPoint                 int
+	ExperiencePoint             int
 	Slash, Blow, Shoot          float64
 	Neutral, Flame, Water, Wood float64
 	Shine, Dark                 float64
@@ -79,7 +79,7 @@ type SimulatorResult struct {
 	DropItemID      *int64
 }
 
-var ErrBattleLost    = errors.New("battle lost")
+var ErrBattleLost = errors.New("battle lost")
 var ErrBattleInvalid = errors.New("battle result invalid")
 
 func Simulate(input SimulatorInput) (SimulatorResult, error) {
@@ -94,9 +94,14 @@ func Simulate(input SimulatorInput) (SimulatorResult, error) {
 	}
 	us := input.User
 
+	// アイテムは 1 ターンに 1 個まで。攻撃するたびに解除される。
+	// リファクタ前のフロント（isItemUsed）と同じ制約をサーバー側でも保証する。
+	itemUsedThisTurn := false
+
 	for _, action := range input.Actions {
 		switch action.Type {
 		case ActionAttack:
+			itemUsedThisTurn = false
 			damage := calcPlayerDamage(rng, us, ms, buffs, debuffs)
 			if damage < 0 {
 				ms.CurrentHitPoint = min(ms.CurrentHitPoint-damage, ms.MaxHitPoint)
@@ -112,7 +117,13 @@ func Simulate(input SimulatorInput) (SimulatorResult, error) {
 			if !ok {
 				return SimulatorResult{}, ErrBattleInvalid
 			}
+			// アイテムは 1 ターンに 1 個まで。攻撃を挟むまで次は使えない。
+			if itemUsedThisTurn {
+				return SimulatorResult{}, ErrBattleInvalid
+			}
+			itemUsedThisTurn = true
 			applyItem(&us, buffs, debuffs, item)
+			continue // アイテム使用はターンを消費せず、モンスター攻撃も発生しない
 
 		case ActionChangeWeapon:
 			if action.WeaponID == nil {
@@ -163,8 +174,10 @@ func calcPlayerDamage(rng *RNG, us UserState, ms MonsterState, buffs, debuffs ma
 	pt := us.Weapon.PhysicsType
 	et := us.Weapon.ElementType
 
+	// フロント側は (elementAttack || 1) なので 0 も 1 に読み替えられる。
+	// nil だけを見ると 0 のときに結果がずれ、再計算が食い違うので同じ扱いにする。
 	ea := 1.0
-	if us.Weapon.ElementAttack != nil {
+	if us.Weapon.ElementAttack != nil && *us.Weapon.ElementAttack != 0 {
 		ea = *us.Weapon.ElementAttack
 	}
 

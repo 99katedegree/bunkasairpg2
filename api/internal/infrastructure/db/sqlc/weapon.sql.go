@@ -20,6 +20,33 @@ func (q *Queries) CountWeaponIndexByUserID(ctx context.Context, userID string) (
 	return count, err
 }
 
+const getAllWeaponIDs = `-- name: GetAllWeaponIDs :many
+SELECT id FROM weapons ORDER BY id
+`
+
+func (q *Queries) GetAllWeaponIDs(ctx context.Context) ([]int64, error) {
+	rows, err := q.db.QueryContext(ctx, getAllWeaponIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getWeaponByID = `-- name: GetWeaponByID :one
 SELECT id, name, index_number, physics_attack, element_attack, physics_type, element_type, created_at, updated_at FROM weapons WHERE id = ? LIMIT 1
 `

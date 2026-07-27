@@ -52,14 +52,19 @@ func (s *Server) GetMe(ctx context.Context, req genapi.GetMeRequestObject) (gena
 			ElementType:   genapi.ElementType(w.ElementType),
 		}
 	} else {
+		// 素手。定義は entity.BareHands 一箇所だけで、バトルの再計算もそこを見ている。
+		bh := entity.BareHands
 		ea := float32(0)
+		if bh.ElementAttack != nil {
+			ea = float32(*bh.ElementAttack)
+		}
 		resp.Weapon = &genapi.WeaponResponse{
-			Id:            0,
-			Name:          "素手",
-			PhysicsAttack: 10,
+			Id:            int(bh.ID),
+			Name:          bh.Name,
+			PhysicsAttack: float32(bh.PhysicsAttack),
 			ElementAttack: &ea,
-			PhysicsType:   genapi.Blow,
-			ElementType:   genapi.Neutral,
+			PhysicsType:   genapi.PhysicsType(bh.PhysicsType),
+			ElementType:   genapi.ElementType(bh.ElementType),
 		}
 	}
 
@@ -88,16 +93,6 @@ func (s *Server) UpdateMe(ctx context.Context, req genapi.UpdateMeRequestObject)
 		id := int64(*req.Body.EquippedWeaponId)
 		upd.EquippedWeaponID = &id
 	}
-	if req.Body.Level != nil {
-		upd.Level = req.Body.Level
-	}
-	if req.Body.HitPoint != nil {
-		upd.HitPoint = req.Body.HitPoint
-	}
-	if req.Body.ExperiencePoint != nil {
-		upd.ExperiencePoint = req.Body.ExperiencePoint
-	}
-
 	if err := s.meUC.Update(ctx, upd); err != nil {
 		_, body := errResponse(err)
 		return genapi.UpdateMe401JSONResponse{UnauthorizedJSONResponse: genapi.UnauthorizedJSONResponse{Errors: body.Errors}}, nil

@@ -24,9 +24,10 @@ type Battle struct {
 	MonsterID sql.NullString `db:"monster_id" json:"monster_id"`
 	Seed      int64          `db:"seed" json:"seed"`
 	// in_progress|completed|lost|expired
-	Status    string    `db:"status" json:"status"`
-	CreatedAt time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
+	Status        string        `db:"status" json:"status"`
+	CreatedAt     time.Time     `db:"created_at" json:"created_at"`
+	UpdatedAt     time.Time     `db:"updated_at" json:"updated_at"`
+	StartWeaponID sql.NullInt64 `db:"start_weapon_id" json:"start_weapon_id"`
 }
 
 type BossRecord struct {
@@ -84,25 +85,26 @@ type ItemEntry struct {
 }
 
 type Monster struct {
-	ID              string        `db:"id" json:"id"`
-	WeaponID        sql.NullInt64 `db:"weapon_id" json:"weapon_id"`
-	ItemID          sql.NullInt64 `db:"item_id" json:"item_id"`
-	IndexNumber     string        `db:"index_number" json:"index_number"`
-	Name            string        `db:"name" json:"name"`
-	Attack          int32         `db:"attack" json:"attack"`
-	HitPoint        int32         `db:"hit_point" json:"hit_point"`
-	ExperiencePoint int32         `db:"experience_point" json:"experience_point"`
-	Slash           string        `db:"slash" json:"slash"`
-	Blow            string        `db:"blow" json:"blow"`
-	Shoot           string        `db:"shoot" json:"shoot"`
-	Neutral         string        `db:"neutral" json:"neutral"`
-	Flame           string        `db:"flame" json:"flame"`
-	Water           string        `db:"water" json:"water"`
-	Wood            string        `db:"wood" json:"wood"`
-	Shine           string        `db:"shine" json:"shine"`
-	Dark            string        `db:"dark" json:"dark"`
-	CreatedAt       time.Time     `db:"created_at" json:"created_at"`
-	UpdatedAt       time.Time     `db:"updated_at" json:"updated_at"`
+	ID               string        `db:"id" json:"id"`
+	WeaponID         sql.NullInt64 `db:"weapon_id" json:"weapon_id"`
+	ItemID           sql.NullInt64 `db:"item_id" json:"item_id"`
+	IndexNumber      string        `db:"index_number" json:"index_number"`
+	Name             string        `db:"name" json:"name"`
+	Attack           int32         `db:"attack" json:"attack"`
+	HitPoint         int32         `db:"hit_point" json:"hit_point"`
+	ExperiencePoint  int32         `db:"experience_point" json:"experience_point"`
+	Slash            string        `db:"slash" json:"slash"`
+	Blow             string        `db:"blow" json:"blow"`
+	Shoot            string        `db:"shoot" json:"shoot"`
+	Neutral          string        `db:"neutral" json:"neutral"`
+	Flame            string        `db:"flame" json:"flame"`
+	Water            string        `db:"water" json:"water"`
+	Wood             string        `db:"wood" json:"wood"`
+	Shine            string        `db:"shine" json:"shine"`
+	Dark             string        `db:"dark" json:"dark"`
+	CreatedAt        time.Time     `db:"created_at" json:"created_at"`
+	UpdatedAt        time.Time     `db:"updated_at" json:"updated_at"`
+	RecommendedLevel int32         `db:"recommended_level" json:"recommended_level"`
 }
 
 type MonsterEntry struct {

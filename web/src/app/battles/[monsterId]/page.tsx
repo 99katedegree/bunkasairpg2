@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { monsterAttackSound } from "@/utils/play-sound/monster-attack-sound";
 import { getMonster } from "@/lib/monster/monster";
 import { startBattle, finishBattle } from "@/lib/battle/battle";
+import { mulberry32 } from "@/utils/seeded-rng";
 
 export default function Page() {
   const [battle, setBattle] = useState<Battle | null>(null);
@@ -30,16 +31,21 @@ export default function Page() {
       if (monsterRes.status !== 200 || battleRes.status !== 200) return;
 
       const monster = monsterRes.data.monster;
-      const { token: battleToken } = battleRes.data;
+      const { token: battleToken, seed } = battleRes.data;
       setToken(battleToken);
 
+      // サーバーは終了時に同じシードで戦闘を再計算して勝敗を検証する。
+      // Math.random のままだと乱数列がずれて必ず不一致になるので、
+      // 受け取ったシードで mulberry32 を回す。
       setBattle(
         new Battle(
           structuredClone({ ...user, maxHitPoint: user.hitPoint }),
           {
             ...monster,
             maxHitPoint: monster.hitPoint,
-          }
+          },
+          false,
+          mulberry32(seed)
         )
       );
     });

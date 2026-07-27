@@ -1,3 +1,3 @@
-export const itemImages: Record<number, string> = {
-  // 1: "/items/<name>.png",
+export const itemImages: Record<string, string> = {
+  // "1": "/items/<name>.png",
 };

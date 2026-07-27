@@ -15,10 +15,12 @@ import {
   ChevronRight,
   X,
   TriangleAlert,
+  ImageOff,
 } from "lucide-react";
 import { startGame, archiveGame } from "@/lib/game/game";
 import { getMonsterBattleTokens } from "@/lib/monster/monster";
 import { generateQrPdf } from "@/utils/generate-qr-pdf";
+import { AssetTable } from "@/components/admin/asset-table";
 
 type LogEntry = { type: "ok" | "err" | "info"; msg: string };
 
@@ -181,6 +183,17 @@ export default function AdminPage() {
                   {isGenerating ? "生成中..." : "QR PDF出力"}
                 </button>
               </div>
+            </section>
+
+            <div className="h-px bg-zinc-800" />
+
+            {/* ── Assets ── */}
+            <section className="bg-zinc-950 p-6">
+              <div className="flex items-center gap-2 mb-5">
+                <ImageOff size={15} className="text-zinc-400" />
+                <h2 className="text-zinc-300 text-sm font-medium">アセット管理</h2>
+              </div>
+              <AssetTable adminToken={Cookies.get("adminToken") ?? ""} />
             </section>
 
           </div>

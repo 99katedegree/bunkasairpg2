@@ -51,6 +51,33 @@ func (q *Queries) DeleteUserItemIfZero(ctx context.Context, arg DeleteUserItemIf
 	return err
 }
 
+const getAllItemIDs = `-- name: GetAllItemIDs :many
+SELECT id FROM items ORDER BY id
+`
+
+func (q *Queries) GetAllItemIDs(ctx context.Context) ([]int64, error) {
+	rows, err := q.db.QueryContext(ctx, getAllItemIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getItemByID = `-- name: GetItemByID :one
 SELECT i.id, i.name, i.index_number, i.effect_type, i.created_at, i.updated_at,
     hi.amount, bi.rate as buff_rate, bi.target as buff_target, di.rate as debuff_rate, di.target as debuff_target

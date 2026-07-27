@@ -2,8 +2,6 @@ package usecase
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/binary"
 	"time"
 
 	"github.com/google/uuid"
@@ -36,11 +34,11 @@ func NewBossBattleUsecase(
 
 // Start はボスバトルを開始しトークンとシードを返す（monster_id = NULL）
 func (u *BossBattleUsecase) Start(ctx context.Context, userID uuid.UUID) (token uuid.UUID, seed int64, err error) {
-	var seedBuf [8]byte
-	if _, err = rand.Read(seedBuf[:]); err != nil {
+	seed, err = newSeed()
+	if err != nil {
 		return uuid.Nil, 0, err
 	}
-	seed = int64(binary.LittleEndian.Uint64(seedBuf[:]))
+
 	token = uuid.New()
 
 	b := &entity.Battle{
@@ -49,6 +47,11 @@ func (u *BossBattleUsecase) Start(ctx context.Context, userID uuid.UUID) (token 
 		MonsterID: nil, // ボスバトルは NULL
 		Seed:      seed,
 		Status:    entity.BattleStatusInProgress,
+	}
+	// 開始時の装備武器を固定する（通常バトルと同じ理由）。
+	if user, err := u.userRepo.FindByID(ctx, userID); err == nil && user.Weapon != nil {
+		weaponID := user.Weapon.ID
+		b.StartWeaponID = &weaponID
 	}
 	if err = u.battleRepo.Create(ctx, b); err != nil {
 		return uuid.Nil, 0, err
@@ -78,8 +81,11 @@ func (u *BossBattleUsecase) Finish(ctx context.Context, userID uuid.UUID, token 
 		return nil, err
 	}
 
-	items, weapons, err := loadBossActionResources(ctx, actions, u.itemRepo, u.weaponRepo)
+	// 通常バトルと同じ所持検証。ボスは戦闘中にアイテムを消費していないので、
+	// ここでまとめて在庫を確認し、あとで減らす。
+	items, weapons, usedItems, err := loadOwnedActionResources(ctx, userID, actions, u.itemRepo, u.weaponRepo)
 	if err != nil {
+		_ = u.battleRepo.UpdateStatus(ctx, b.ID, entity.BattleStatusExpired)
 		return nil, err
 	}
 
@@ -90,12 +96,21 @@ func (u *BossBattleUsecase) Finish(ctx context.Context, userID uuid.UUID, token 
 		Actions: actions,
 		Monster: bossMonster,
 		IsBoss:  true,
-		User:    battle.UserState{Level: user.Level, HitPoint: user.HitPoint, MaxHitPoint: user.HitPoint, ExperiencePoint: user.ExperiencePoint},
+		User: battle.UserState{
+			Level: user.Level, HitPoint: user.HitPoint, MaxHitPoint: user.HitPoint,
+			ExperiencePoint: user.ExperiencePoint,
+			// 開始時の装備武器。記録がなければ素手。
+			Weapon: entityWeaponToParams(&entity.BareHands),
+		},
 		Items:   items,
 		Weapons: weapons,
 	}
-	if user.Weapon != nil {
-		input.User.Weapon = entityWeaponToParams(user.Weapon)
+	if b.StartWeaponID != nil {
+		w, err := u.weaponRepo.FindByID(ctx, *b.StartWeaponID)
+		if err != nil {
+			return nil, err
+		}
+		input.User.Weapon = entityWeaponToParams(w)
 	}
 
 	_, err = battle.Simulate(input)
@@ -105,9 +120,14 @@ func (u *BossBattleUsecase) Finish(ctx context.Context, userID uuid.UUID, token 
 		if err == battle.ErrBattleInvalid {
 			status = entity.BattleStatusExpired
 		}
+		if err != battle.ErrBattleInvalid {
+			consumeUsedItems(ctx, userID, usedItems, u.itemRepo)
+		}
 		_ = u.battleRepo.UpdateStatus(ctx, b.ID, status)
 		return nil, err
 	}
+
+	consumeUsedItems(ctx, userID, usedItems, u.itemRepo)
 
 	clearTimeMs := int(finishTime.Sub(b.CreatedAt).Milliseconds())
 	_ = u.battleRepo.UpdateStatus(ctx, b.ID, entity.BattleStatusCompleted)
@@ -123,7 +143,7 @@ func (u *BossBattleUsecase) Finish(ctx context.Context, userID uuid.UUID, token 
 	newLevel := calcLevel(newExp)
 	newHP := user.HitPoint
 	if newLevel > user.Level {
-		newHP += (newLevel - user.Level) * 8
+		newHP += levelUpHitPointGain(newLevel - user.Level)
 	}
 	_ = u.userRepo.Update(ctx, &entity.UpdateUser{
 		ID:              userID,
@@ -145,30 +165,4 @@ type BossFinishResult struct {
 	ExperiencePoint int
 	Level           int
 	HitPoint        int
-}
-
-func loadBossActionResources(ctx context.Context, actions []battle.Action, itemRepo repository.ItemRepository, weaponRepo repository.WeaponRepository) (map[int64]battle.ItemParams, map[int64]battle.WeaponParams, error) {
-	items := map[int64]battle.ItemParams{}
-	weapons := map[int64]battle.WeaponParams{}
-	for _, a := range actions {
-		if a.Type == battle.ActionUseItem && a.ItemID != nil {
-			if _, ok := items[*a.ItemID]; !ok {
-				it, err := itemRepo.FindByID(ctx, *a.ItemID)
-				if err != nil {
-					return nil, nil, err
-				}
-				items[*a.ItemID] = entityItemToParams(it)
-			}
-		}
-		if a.Type == battle.ActionChangeWeapon && a.WeaponID != nil {
-			if _, ok := weapons[*a.WeaponID]; !ok {
-				w, err := weaponRepo.FindByID(ctx, *a.WeaponID)
-				if err != nil {
-					return nil, nil, err
-				}
-				weapons[*a.WeaponID] = entityWeaponToParams(w)
-			}
-		}
-	}
-	return items, weapons, nil
 }

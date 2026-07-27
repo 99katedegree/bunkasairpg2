@@ -78,11 +78,13 @@ export interface MeResponse {
   weapon?: WeaponResponse | null;
 }
 
+/**
+ * プロフィールに関わる項目のみ変更できる。
+ * レベル・HP・経験値はバトル終了時にサーバーが決めるため受け付けない。
+ */
 export interface UpdateMeRequest {
   name?: string;
-  level?: number;
-  hitPoint?: number;
-  experiencePoint?: number;
+  /** 所持している武器のみ指定できる */
   equippedWeaponId?: number;
   avatarImageId?: number;
 }
@@ -113,6 +115,7 @@ export interface MonsterDetailResponse {
   attack: number;
   hitPoint: number;
   experiencePoint: number;
+  recommendedLevel: number;
   slash?: number;
   blow?: number;
   shoot?: number;
@@ -296,6 +299,18 @@ limit?: LimitParameter;
 export type GetMeItemIndex200 = {
   items: (ItemResponse | null)[];
   total: number;
+};
+
+export type GetMonsterIds200 = {
+  ids: string[];
+};
+
+export type GetWeaponIds200 = {
+  ids: string[];
+};
+
+export type GetItemIds200 = {
+  ids: string[];
 };
 
 export type GetMonsterBattleTokens200 = {

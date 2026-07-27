@@ -21,8 +21,10 @@ type Querier interface {
 	DeleteInactiveUsers(ctx context.Context) error
 	DeleteUserItemIfZero(ctx context.Context, arg DeleteUserItemIfZeroParams) error
 	FindAdminByEmail(ctx context.Context, email string) (Admin, error)
+	GetAllItemIDs(ctx context.Context) ([]int64, error)
 	GetAllMonsterIDs(ctx context.Context) ([]string, error)
 	GetAllUserIDs(ctx context.Context) ([]string, error)
+	GetAllWeaponIDs(ctx context.Context) ([]int64, error)
 	GetBattleByID(ctx context.Context, id string) (Battle, error)
 	GetItemByID(ctx context.Context, id int64) (GetItemByIDRow, error)
 	GetItemIndexByUserID(ctx context.Context, arg GetItemIndexByUserIDParams) ([]GetItemIndexByUserIDRow, error)

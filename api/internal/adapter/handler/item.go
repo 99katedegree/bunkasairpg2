@@ -2,10 +2,28 @@ package handler
 
 import (
 	"context"
+	"strconv"
 
 	genapi "github.com/99katedegree/bunkasairpg2/api/gen/api"
 	mw "github.com/99katedegree/bunkasairpg2/api/internal/adapter/middleware"
 )
+
+func (s *Server) GetItemIds(ctx context.Context, req genapi.GetItemIdsRequestObject) (genapi.GetItemIdsResponseObject, error) {
+	echoCtx, ok := mw.GetEchoContext(ctx)
+	if !ok || !mw.IsAdmin(echoCtx) {
+		return genapi.GetItemIds401JSONResponse{UnauthorizedJSONResponse: genapi.UnauthorizedJSONResponse{Errors: []string{"UNAUTHORIZED"}}}, nil
+	}
+	ids, err := s.itemUC.GetAllIDs(ctx)
+	if err != nil {
+		_, body := errResponse(err)
+		return genapi.GetItemIds401JSONResponse{UnauthorizedJSONResponse: genapi.UnauthorizedJSONResponse{Errors: body.Errors}}, nil
+	}
+	strIDs := make([]string, 0, len(ids))
+	for _, id := range ids {
+		strIDs = append(strIDs, strconv.FormatInt(id, 10))
+	}
+	return genapi.GetItemIds200JSONResponse{Ids: strIDs}, nil
+}
 
 func (s *Server) GetItems(ctx context.Context, req genapi.GetItemsRequestObject) (genapi.GetItemsResponseObject, error) {
 	echoCtx, ok := mw.GetEchoContext(ctx)

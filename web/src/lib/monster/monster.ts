@@ -15,6 +15,7 @@ import type {
   ErrorResponse,
   GetMonster200,
   GetMonsterBattleTokens200,
+  GetMonsterIds200,
   GetMonsters200,
   GetMonstersParams,
   UnauthorizedResponse
@@ -98,6 +99,80 @@ export const useGetMonsters = <TError = Promise<UnauthorizedResponse>>(
   const isEnabled = swrOptions?.enabled !== false
   const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetMonstersKey(params) : null);
   const swrFn = () => getMonsters(params, fetchOptions)
+
+  const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions)
+
+  return {
+    swrKey,
+    ...query
+  }
+}
+export type getMonsterIdsResponse200 = {
+  data: GetMonsterIds200
+  status: 200
+}
+
+export type getMonsterIdsResponse401 = {
+  data: UnauthorizedResponse
+  status: 401
+}
+
+export type getMonsterIdsResponseSuccess = (getMonsterIdsResponse200) & {
+  headers: Headers;
+};
+export type getMonsterIdsResponseError = (getMonsterIdsResponse401) & {
+  headers: Headers;
+};
+
+export type getMonsterIdsResponse = (getMonsterIdsResponseSuccess | getMonsterIdsResponseError)
+
+export const getGetMonsterIdsUrl = () => {
+
+
+
+
+  return `http://localhost:8085/monsters/ids`
+}
+
+/**
+ * @summary [管理者専用] 全モンスターID一覧取得
+ */
+export const getMonsterIds = async ( options?: RequestInit): Promise<getMonsterIdsResponse> => {
+
+  const res = await fetch(getGetMonsterIdsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getMonsterIdsResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getMonsterIdsResponse
+}
+
+
+
+
+export const getGetMonsterIdsKey = () => [`http://localhost:8085/monsters/ids`] as const;
+
+export type GetMonsterIdsQueryResult = NonNullable<Awaited<ReturnType<typeof getMonsterIds>>>
+
+/**
+ * @summary [管理者専用] 全モンスターID一覧取得
+ */
+export const useGetMonsterIds = <TError = Promise<UnauthorizedResponse>>(
+   options?: { swr?:SWRConfiguration<Awaited<ReturnType<typeof getMonsterIds>>, TError> & { swrKey?: Key, enabled?: boolean }, fetch?: RequestInit }
+) => {
+  const {swr: swrOptions, fetch: fetchOptions} = options ?? {}
+
+  const isEnabled = swrOptions?.enabled !== false
+  const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetMonsterIdsKey() : null);
+  const swrFn = () => getMonsterIds(fetchOptions)
 
   const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions)
 

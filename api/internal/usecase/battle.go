@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/binary"
 	"math"
+	mrand "math/rand/v2"
 	"time"
 
 	"github.com/google/uuid"
@@ -57,12 +58,17 @@ func (u *BattleUsecase) Start(ctx context.Context, userID, monsterID uuid.UUID) 
 		}
 	}
 
-	// シード生成
-	var seedBuf [8]byte
-	if _, err = rand.Read(seedBuf[:]); err != nil {
+	seed, err = newSeed()
+	if err != nil {
 		return uuid.Nil, 0, err
 	}
-	seed = int64(binary.LittleEndian.Uint64(seedBuf[:]))
+
+	// 開始時の装備武器を固定する。戦闘中の持ち替えで users.equipped_weapon_id が
+	// 書き換わるため、終了時にそこを見ると別の武器から再計算してしまう。
+	user, err := u.userRepo.FindByID(ctx, userID)
+	if err != nil {
+		return uuid.Nil, 0, err
+	}
 
 	token = uuid.New()
 	b := &entity.Battle{
@@ -71,6 +77,10 @@ func (u *BattleUsecase) Start(ctx context.Context, userID, monsterID uuid.UUID) 
 		MonsterID: &monsterID,
 		Seed:      seed,
 		Status:    entity.BattleStatusInProgress,
+	}
+	if user.Weapon != nil {
+		weaponID := user.Weapon.ID
+		b.StartWeaponID = &weaponID
 	}
 	if err = u.battleRepo.Create(ctx, b); err != nil {
 		return uuid.Nil, 0, err
@@ -108,23 +118,40 @@ func (u *BattleUsecase) Finish(ctx context.Context, userID uuid.UUID, token uuid
 		return nil, err
 	}
 
-	// 使用アイテム・変更武器を事前ロード
-	items, weapons, err := u.loadActionResources(ctx, actions)
+	// 使用アイテム・変更武器を事前ロードし、所持を検証する
+	items, weapons, usedItems, err := u.loadActionResources(ctx, userID, actions)
 	if err != nil {
+		_ = u.battleRepo.UpdateStatus(ctx, b.ID, entity.BattleStatusExpired)
 		return nil, err
 	}
 
+	// 開始時の装備武器。記録がなければ素手。
+	startWeapon := entityWeaponToParams(&entity.BareHands)
+	if b.StartWeaponID != nil {
+		w, err := u.weaponRepo.FindByID(ctx, *b.StartWeaponID)
+		if err != nil {
+			return nil, err
+		}
+		startWeapon = entityWeaponToParams(w)
+	}
+
 	// シミュレーション実行
-	input := buildSimulatorInput(b.Seed, actions, monster, user, items, weapons, false)
+	input := buildSimulatorInput(b.Seed, actions, monster, user, startWeapon, items, weapons, false)
 	_, err = battle.Simulate(input)
 	if err != nil {
 		status := entity.BattleStatusLost
 		if err == battle.ErrBattleInvalid {
 			status = entity.BattleStatusExpired
 		}
+		// 敗北ならアイテムは使い切っている。手順が不正だった場合だけ消費しない。
+		if err != battle.ErrBattleInvalid {
+			consumeUsedItems(ctx, userID, usedItems, u.itemRepo)
+		}
 		_ = u.battleRepo.UpdateStatus(ctx, b.ID, status)
 		return nil, err
 	}
+
+	consumeUsedItems(ctx, userID, usedItems, u.itemRepo)
 
 	// 報酬付与
 	_ = u.battleRepo.UpdateStatus(ctx, b.ID, entity.BattleStatusCompleted)
@@ -132,7 +159,7 @@ func (u *BattleUsecase) Finish(ctx context.Context, userID uuid.UUID, token uuid
 	newLevel := calcLevel(newExp)
 	newHP := user.HitPoint
 	if newLevel > user.Level {
-		newHP += (newLevel - user.Level) * 8
+		newHP += levelUpHitPointGain(newLevel - user.Level)
 	}
 	_ = u.userRepo.Update(ctx, &entity.UpdateUser{
 		ID:              userID,
@@ -172,37 +199,85 @@ type FinishBattleResult struct {
 	DropItemID      *int
 }
 
-func (u *BattleUsecase) loadActionResources(ctx context.Context, actions []battle.Action) (map[int64]battle.ItemParams, map[int64]battle.WeaponParams, error) {
+func (u *BattleUsecase) loadActionResources(ctx context.Context, userID uuid.UUID, actions []battle.Action) (map[int64]battle.ItemParams, map[int64]battle.WeaponParams, map[int64]int, error) {
+	items, weapons, used, err := loadOwnedActionResources(ctx, userID, actions, u.itemRepo, u.weaponRepo)
+	return items, weapons, used, err
+}
+
+// loadOwnedActionResources はアクション列で使われる武器とアイテムを読み込む。
+//
+// 併せて所持を検証する。ここを通さないと、クライアントは持っていない最強武器への
+// 持ち替えや、持っていないデバフアイテムの使用を宣言するだけで再計算を通せてしまう。
+// 戻り値の第3引数はアイテムIDごとの使用回数で、呼び出し側が消費に使う。
+func loadOwnedActionResources(
+	ctx context.Context,
+	userID uuid.UUID,
+	actions []battle.Action,
+	itemRepo repository.ItemRepository,
+	weaponRepo repository.WeaponRepository,
+) (map[int64]battle.ItemParams, map[int64]battle.WeaponParams, map[int64]int, error) {
 	items := map[int64]battle.ItemParams{}
 	weapons := map[int64]battle.WeaponParams{}
+	usedCount := map[int64]int{}
+
+	// 所持アイテムの在庫を一度だけ引く
+	owned, err := itemRepo.FindByUserID(ctx, userID)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	stock := make(map[int64]int, len(owned))
+	for _, it := range owned {
+		stock[it.ID] = it.Count
+	}
+
 	for _, a := range actions {
-		if a.Type == battle.ActionUseItem && a.ItemID != nil {
+		switch {
+		case a.Type == battle.ActionUseItem && a.ItemID != nil:
+			usedCount[*a.ItemID]++
+			// 在庫を超えて使ったと主張していないか
+			if usedCount[*a.ItemID] > stock[*a.ItemID] {
+				return nil, nil, nil, entity.ErrItemStockEmpty
+			}
 			if _, ok := items[*a.ItemID]; !ok {
-				it, err := u.itemRepo.FindByID(ctx, *a.ItemID)
+				it, err := itemRepo.FindByID(ctx, *a.ItemID)
 				if err != nil {
-					return nil, nil, err
+					return nil, nil, nil, err
 				}
 				items[*a.ItemID] = entityItemToParams(it)
 			}
-		}
-		if a.Type == battle.ActionChangeWeapon && a.WeaponID != nil {
+
+		case a.Type == battle.ActionChangeWeapon && a.WeaponID != nil:
 			if _, ok := weapons[*a.WeaponID]; !ok {
-				w, err := u.weaponRepo.FindByID(ctx, *a.WeaponID)
+				isOwned, err := weaponRepo.IsOwnedByUser(ctx, userID, *a.WeaponID)
 				if err != nil {
-					return nil, nil, err
+					return nil, nil, nil, err
+				}
+				if !isOwned {
+					return nil, nil, nil, entity.ErrWeaponNotOwned
+				}
+				w, err := weaponRepo.FindByID(ctx, *a.WeaponID)
+				if err != nil {
+					return nil, nil, nil, err
 				}
 				weapons[*a.WeaponID] = entityWeaponToParams(w)
 			}
 		}
 	}
-	return items, weapons, nil
+	return items, weapons, usedCount, nil
 }
 
-func buildSimulatorInput(seed int64, actions []battle.Action, monster *entity.Monster, user *entity.User, items map[int64]battle.ItemParams, weapons map[int64]battle.WeaponParams, isBoss bool) battle.SimulatorInput {
-	var startWeapon battle.WeaponParams
-	if user.Weapon != nil {
-		startWeapon = entityWeaponToParams(user.Weapon)
+// consumeUsedItems は検証済みのアクション列で実際に使われた分を減らす。
+// 消費はここに一本化してあり、戦闘中には減らさない。
+// 途中で減らすと、終了時の再計算から見て在庫が足りない状態になってしまう。
+func consumeUsedItems(ctx context.Context, userID uuid.UUID, used map[int64]int, itemRepo repository.ItemRepository) {
+	for itemID, n := range used {
+		for range n {
+			_ = itemRepo.DecrementUserItem(ctx, userID, itemID)
+		}
 	}
+}
+
+func buildSimulatorInput(seed int64, actions []battle.Action, monster *entity.Monster, user *entity.User, startWeapon battle.WeaponParams, items map[int64]battle.ItemParams, weapons map[int64]battle.WeaponParams, isBoss bool) battle.SimulatorInput {
 	return battle.SimulatorInput{
 		Seed:    seed,
 		Actions: actions,
@@ -246,6 +321,32 @@ func entityItemToParams(it *entity.Item) battle.ItemParams {
 		Rate:       it.Rate,
 		Target:     it.Target,
 	}
+}
+
+// newSeed はバトル用のシードを作る。
+//
+// JavaScript の数値は倍精度浮動小数なので、2^53 を超える整数は JSON を経由した時点で
+// 丸められる。乱数生成（mulberry32）は下位 32bit しか使わないが、丸めで下位ビットまで
+// 変わってしまうため、はじめから 32bit に収めてサーバーとクライアントを一致させる。
+func newSeed() (int64, error) {
+	var buf [4]byte
+	if _, err := rand.Read(buf[:]); err != nil {
+		return 0, err
+	}
+	return int64(binary.LittleEndian.Uint32(buf[:])), nil
+}
+
+// levelUpHitPointGain は levels 段のレベルアップで増える最大HPを返す。
+//
+// 1 段ごとに 6〜10 の一様乱数を引いて合計する。リファクタ前はこれをフロントの
+// reward() が計算していたが、報酬はサーバーが決めるようになったのでここへ移した。
+// 結果は finish のレスポンスで返すだけなので、クライアントと同期する必要はない。
+func levelUpHitPointGain(levels int) int {
+	gain := 0
+	for range levels {
+		gain += 6 + mrand.IntN(5)
+	}
+	return gain
 }
 
 // calcLevel は経験値からレベルを計算する。

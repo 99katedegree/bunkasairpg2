@@ -1,3 +1,6 @@
+-- name: GetAllWeaponIDs :many
+SELECT id FROM weapons ORDER BY id;
+
 -- name: GetWeaponByID :one
 SELECT * FROM weapons WHERE id = ? LIMIT 1;
 

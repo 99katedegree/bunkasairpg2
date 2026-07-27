@@ -1,4 +1,4 @@
-export const weaponImages: Record<number, string> = {
-  0: "/weapons/fist.png", // 素手
-  // 1: "/weapons/<name>.png",
+export const weaponImages: Record<string, string> = {
+  "0": "/weapons/fist.png", // 素手
+  // "1": "/weapons/<name>.png",
 };

@@ -6,6 +6,7 @@ export type Boss = {
   maxHitPoint: number;
   hitPoint: number;
   experiencePoint: number;
+  recommendedLevel: number;
   slash: number;
   blow: number;
   shoot: number;
@@ -26,6 +27,8 @@ export const boss: Boss = {
   maxHitPoint: 4000,
   hitPoint: 4000,
   experiencePoint: 16000,
+  // 表示用。モンスター側の推奨レベルは最大90なので、その先の相手という位置づけ。
+  recommendedLevel: 90,
   slash: 1.0,
   blow: 1.0,
   shoot: 1.0,
