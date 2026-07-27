@@ -246,7 +246,10 @@ func resistance(ms MonsterState, typ string) float64 {
 	case "dark":
 		return ms.Dark
 	}
-	return 1.0
+	// 未知の軸名は等倍として扱う。この式で 1.0 は「無効」を意味するため、
+	// 既定値にすると武器のタイプが想定外だったときに黙ってダメージが 0 になる。
+	// 等倍なら少なくとも戦闘は成立し、フロント側の既定値とも揃う。
+	return 0.0
 }
 
 func min(a, b int) int {

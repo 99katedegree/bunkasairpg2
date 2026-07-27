@@ -104,25 +104,34 @@ export class Battle {
       return {
         monsterHitPoint: this.monster.hitPoint,
         damage: 0,
-        monsterResistance: { physics: 1.0, element: 1.0 },
+        monsterResistance: { physics: 0.0, element: 0.0 },
       };
     }
     const physicsType = this.user.weapon.physicsType;
     const elementType = this.user.weapon.elementType;
-    // 耐性はスキーマ上必須なのでフォールバック不要。以前は ?? 1.0 としていたが、
-    // この式で 1.0 は「無効」を意味するため、等倍(0.0)が API から省略された際に
-    // ダメージが 0 になっていた。既定値を置くならこの式では 0.0 が等倍にあたる。
-    const monsterPhysics = this.monster[physicsType];
-    const monsterElement = this.monster[elementType];
+    // 既定値は等倍(0.0)。サーバー側 resistance() と揃えてある。
+    // この式で 1.0 は「無効」を意味するので既定値にしてはいけない。以前は ?? 1.0
+    // だったため、等倍が API から省略された際にダメージが 0 になっていた。
+    // 耐性はスキーマ上必須になったので型の上では必ず number だが、enum 外の
+    // タイプが来ると undefined から NaN が伝播するため実行時にも守る。
+    const monsterPhysics = this.monster[physicsType] ?? 0.0;
+    const monsterElement = this.monster[elementType] ?? 0.0;
+    // バフ・デバフも同じキーで引くので未知のタイプでは undefined になる。
+    // サーバー側は Go の map でキーが無ければ 0 が返るため、揃えないと
+    // ここだけ NaN になって全体に伝播する。
+    const buffP = this.buffs[physicsType] ?? 0;
+    const buffE = this.buffs[elementType] ?? 0;
+    const debuffP = this.debuffs[physicsType] ?? 0;
+    const debuffE = this.debuffs[elementType] ?? 0;
     // デバフは耐性倍率への加算。サーバー側 calcPlayerDamage と必ず同じ式にすること。
     const physics =
       this.user.weapon.physicsAttack *
-      (1 + this.buffs[physicsType]) *
-      (1 - monsterPhysics + this.debuffs[physicsType]);
+      (1 + buffP) *
+      (1 - monsterPhysics + debuffP);
     const element =
       (this.user.weapon.elementAttack || 1) *
-      (1 + this.buffs[elementType]) *
-      (1 - monsterElement + this.debuffs[elementType]);
+      (1 + buffE) *
+      (1 - monsterElement + debuffE);
     // 物理と属性は加算ではなく乗算。属性を攻撃全体にかかる係数として効かせるための
     // 構造で、加算にすると炎吸収の相手に炎属性武器で殴ったとき属性分だけ吸収されて
     // 物理分はダメージが通ってしまう。攻撃全体が吸収される方が納得感があるためこの形。
