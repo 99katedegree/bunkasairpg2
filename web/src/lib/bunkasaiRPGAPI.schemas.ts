@@ -116,15 +116,15 @@ export interface MonsterDetailResponse {
   hitPoint: number;
   experiencePoint: number;
   recommendedLevel: number;
-  slash?: number;
-  blow?: number;
-  shoot?: number;
-  neutral?: number;
-  flame?: number;
-  water?: number;
-  wood?: number;
-  shine?: number;
-  dark?: number;
+  slash: number;
+  blow: number;
+  shoot: number;
+  neutral: number;
+  flame: number;
+  water: number;
+  wood: number;
+  shine: number;
+  dark: number;
   weapon?: WeaponResponse | null;
   item?: ItemResponse | null;
 }

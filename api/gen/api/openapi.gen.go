@@ -260,22 +260,22 @@ type MonsterCatalogResponse struct {
 // MonsterDetailResponse defines model for MonsterDetailResponse.
 type MonsterDetailResponse struct {
 	Attack           int                `json:"attack"`
-	Blow             *float32           `json:"blow,omitempty"`
-	Dark             *float32           `json:"dark,omitempty"`
+	Blow             float32            `json:"blow"`
+	Dark             float32            `json:"dark"`
 	ExperiencePoint  int                `json:"experiencePoint"`
-	Flame            *float32           `json:"flame,omitempty"`
+	Flame            float32            `json:"flame"`
 	HitPoint         int                `json:"hitPoint"`
 	Id               openapi_types.UUID `json:"id"`
 	Item             *ItemResponse      `json:"item,omitempty"`
 	Name             string             `json:"name"`
-	Neutral          *float32           `json:"neutral,omitempty"`
+	Neutral          float32            `json:"neutral"`
 	RecommendedLevel int                `json:"recommendedLevel"`
-	Shine            *float32           `json:"shine,omitempty"`
-	Shoot            *float32           `json:"shoot,omitempty"`
-	Slash            *float32           `json:"slash,omitempty"`
-	Water            *float32           `json:"water,omitempty"`
+	Shine            float32            `json:"shine"`
+	Shoot            float32            `json:"shoot"`
+	Slash            float32            `json:"slash"`
+	Water            float32            `json:"water"`
 	Weapon           *WeaponResponse    `json:"weapon,omitempty"`
-	Wood             *float32           `json:"wood,omitempty"`
+	Wood             float32            `json:"wood"`
 }
 
 // PhysicsType defines model for PhysicsType.

@@ -99,42 +99,18 @@ func (s *Server) GetMonster(ctx context.Context, req genapi.GetMonsterRequestObj
 		RecommendedLevel: monster.RecommendedLevel,
 	}
 
-	if monster.Slash != 0 {
-		v := float32(monster.Slash)
-		detail.Slash = &v
-	}
-	if monster.Blow != 0 {
-		v := float32(monster.Blow)
-		detail.Blow = &v
-	}
-	if monster.Shoot != 0 {
-		v := float32(monster.Shoot)
-		detail.Shoot = &v
-	}
-	if monster.Neutral != 0 {
-		v := float32(monster.Neutral)
-		detail.Neutral = &v
-	}
-	if monster.Flame != 0 {
-		v := float32(monster.Flame)
-		detail.Flame = &v
-	}
-	if monster.Water != 0 {
-		v := float32(monster.Water)
-		detail.Water = &v
-	}
-	if monster.Wood != 0 {
-		v := float32(monster.Wood)
-		detail.Wood = &v
-	}
-	if monster.Shine != 0 {
-		v := float32(monster.Shine)
-		detail.Shine = &v
-	}
-	if monster.Dark != 0 {
-		v := float32(monster.Dark)
-		detail.Dark = &v
-	}
+	// 耐性は 0.0 が「等倍」を意味する有効な値なので、必ず詰める。
+	// 以前は 0 のとき省略していたため、受け手側で未設定と区別できず
+	// 等倍のモンスターに一切ダメージが通らなくなっていた。
+	detail.Slash = float32(monster.Slash)
+	detail.Blow = float32(monster.Blow)
+	detail.Shoot = float32(monster.Shoot)
+	detail.Neutral = float32(monster.Neutral)
+	detail.Flame = float32(monster.Flame)
+	detail.Water = float32(monster.Water)
+	detail.Wood = float32(monster.Wood)
+	detail.Shine = float32(monster.Shine)
+	detail.Dark = float32(monster.Dark)
 
 	if monster.Weapon != nil {
 		w := monster.Weapon

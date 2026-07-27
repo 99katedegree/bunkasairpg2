@@ -880,7 +880,27 @@ components:
 
     MonsterDetailResponse:
       type: object
-      required: [id, name, attack, hitPoint, experiencePoint, recommendedLevel]
+      # 耐性9軸は必須。DB のカラムが NOT NULL で「未設定」が存在せず、0.0 は
+      # 「等倍」という意味のある値なので、省略可能にすると受け手が 0.0 と
+      # 未設定を区別できない。実際それでダメージ計算が壊れていた。
+      required:
+        [
+          id,
+          name,
+          attack,
+          hitPoint,
+          experiencePoint,
+          recommendedLevel,
+          slash,
+          blow,
+          shoot,
+          neutral,
+          flame,
+          water,
+          wood,
+          shine,
+          dark,
+        ]
       properties:
         id:
           type: string

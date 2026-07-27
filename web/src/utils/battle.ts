@@ -109,8 +109,11 @@ export class Battle {
     }
     const physicsType = this.user.weapon.physicsType;
     const elementType = this.user.weapon.elementType;
-    const monsterPhysics = this.monster[physicsType] ?? 1.0;
-    const monsterElement = this.monster[elementType] ?? 1.0;
+    // 耐性はスキーマ上必須なのでフォールバック不要。以前は ?? 1.0 としていたが、
+    // この式で 1.0 は「無効」を意味するため、等倍(0.0)が API から省略された際に
+    // ダメージが 0 になっていた。既定値を置くならこの式では 0.0 が等倍にあたる。
+    const monsterPhysics = this.monster[physicsType];
+    const monsterElement = this.monster[elementType];
     // デバフは耐性倍率への加算。サーバー側 calcPlayerDamage と必ず同じ式にすること。
     const physics =
       this.user.weapon.physicsAttack *
