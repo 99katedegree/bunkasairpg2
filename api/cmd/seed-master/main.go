@@ -36,6 +36,7 @@ func main() {
 		envPath = flag.String("env", ".env", "読み込む .env のパス")
 		dryRun  = flag.Bool("dry-run", false, "DB に書き込まず検証とバランス表だけ実行する")
 		report  = flag.Bool("report", false, "投入後にバランス表を出力する")
+		reset   = flag.Bool("reset", false, "投入前にマスタ 3 テーブルを空にする（図鑑番号を振り直したとき用）")
 	)
 	flag.Parse()
 
@@ -73,12 +74,53 @@ func main() {
 		os.Exit(1)
 	}
 
+	if *reset {
+		if err := resetMaster(ctx, db); err != nil {
+			slog.Error("マスタの初期化に失敗", "err", err)
+			os.Exit(1)
+		}
+		slog.Info("マスタを空にした")
+	}
+
 	if err := seed(ctx, db); err != nil {
 		slog.Error("投入に失敗", "err", err)
 		os.Exit(1)
 	}
 	slog.Info("投入完了",
 		"weapons", len(weapons), "items", len(items), "monsters", len(monsters))
+}
+
+// ============================================================================
+// 初期化
+// ============================================================================
+
+// resetMaster はマスタ 3 テーブルを空にする。
+//
+// 通常の投入は ID 固定の upsert なので初期化は要らない。必要になるのは
+// 図鑑番号を振り直したときで、index_number にユニーク制約があるため
+// 「A が持っていた番号を B に付け替える」更新が重複エラーになる。
+// 先に全部消してから入れ直せば衝突しない。
+//
+// ユーザーの所持品・図鑑登録・バトル履歴はマスタを外部キーで参照している。
+// それらが残った状態で消すと失敗するので、参加者が遊び始めたあとは使えない。
+// 番号を振り直すなら本番稼働前に済ませること。
+func resetMaster(ctx context.Context, db *sql.DB) error {
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// 子テーブルから先に消す。monsters は weapons / items を参照するので最後。
+	for _, table := range []string{
+		"heal_items", "buff_items", "debuff_items",
+		"monsters", "weapons", "items",
+	} {
+		if _, err := tx.ExecContext(ctx, "DELETE FROM "+table); err != nil {
+			return fmt.Errorf("%s の初期化: %w", table, err)
+		}
+	}
+	return tx.Commit()
 }
 
 // ============================================================================
