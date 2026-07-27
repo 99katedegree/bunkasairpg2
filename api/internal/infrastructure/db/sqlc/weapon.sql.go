@@ -21,9 +21,10 @@ func (q *Queries) CountWeaponIndexByUserID(ctx context.Context, userID string) (
 }
 
 const getAllWeaponIDs = `-- name: GetAllWeaponIDs :many
-SELECT id FROM weapons ORDER BY id
+SELECT id FROM weapons ORDER BY index_number
 `
 
+// 図鑑番号は 4 桁ゼロ埋めの数字なので、文字列順でそのまま番号順になる。
 func (q *Queries) GetAllWeaponIDs(ctx context.Context) ([]int64, error) {
 	rows, err := q.db.QueryContext(ctx, getAllWeaponIDs)
 	if err != nil {

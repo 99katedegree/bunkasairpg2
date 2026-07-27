@@ -21,9 +21,11 @@ type Querier interface {
 	DeleteInactiveUsers(ctx context.Context) error
 	DeleteUserItemIfZero(ctx context.Context, arg DeleteUserItemIfZeroParams) error
 	FindAdminByEmail(ctx context.Context, email string) (Admin, error)
+	// 図鑑番号は 4 桁ゼロ埋めの数字なので、文字列順でそのまま番号順になる。
 	GetAllItemIDs(ctx context.Context) ([]int64, error)
 	GetAllMonsterIDs(ctx context.Context) ([]string, error)
 	GetAllUserIDs(ctx context.Context) ([]string, error)
+	// 図鑑番号は 4 桁ゼロ埋めの数字なので、文字列順でそのまま番号順になる。
 	GetAllWeaponIDs(ctx context.Context) ([]int64, error)
 	GetBattleByID(ctx context.Context, id string) (Battle, error)
 	GetItemByID(ctx context.Context, id int64) (GetItemByIDRow, error)

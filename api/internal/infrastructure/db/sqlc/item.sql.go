@@ -52,9 +52,10 @@ func (q *Queries) DeleteUserItemIfZero(ctx context.Context, arg DeleteUserItemIf
 }
 
 const getAllItemIDs = `-- name: GetAllItemIDs :many
-SELECT id FROM items ORDER BY id
+SELECT id FROM items ORDER BY index_number
 `
 
+// 図鑑番号は 4 桁ゼロ埋めの数字なので、文字列順でそのまま番号順になる。
 func (q *Queries) GetAllItemIDs(ctx context.Context) ([]int64, error) {
 	rows, err := q.db.QueryContext(ctx, getAllItemIDs)
 	if err != nil {

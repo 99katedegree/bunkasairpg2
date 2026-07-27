@@ -22,6 +22,7 @@ import (
 	"log/slog"
 	"math"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -222,6 +223,9 @@ func validate() []string {
 			add("武器 index_number %q が %s と %s で重複している", w.IndexNumber, prev, w.Name)
 		}
 		seenIndex[w.IndexNumber] = w.Name
+		if !indexNumberPattern.MatchString(w.IndexNumber) {
+			add("武器 %s の index_number %q が 4 桁の数字でない", w.Name, w.IndexNumber)
+		}
 
 		if !physicsTypes[w.PhysicsType] {
 			add("武器 %s の physics_type %q が不正", w.Name, w.PhysicsType)
@@ -249,6 +253,9 @@ func validate() []string {
 			add("アイテム index_number %q が %s と %s で重複している", it.IndexNumber, prev, it.Name)
 		}
 		seenIndex[it.IndexNumber] = it.Name
+		if !indexNumberPattern.MatchString(it.IndexNumber) {
+			add("アイテム %s の index_number %q が 4 桁の数字でない", it.Name, it.IndexNumber)
+		}
 
 		switch it.EffectType {
 		case EffectHeal:
@@ -317,6 +324,11 @@ func validate() []string {
 			droppedItems[*m.DropItemID] = true
 		}
 
+		// 図鑑番号は 4 桁の数字。上位 3 桁が種族、末尾 1 桁が個体番号。
+		if !indexNumberPattern.MatchString(m.IndexNumber) {
+			add("%s の index_number %q が 4 桁の数字でない", m.Name, m.IndexNumber)
+		}
+
 		// 武器だけで削れるか。削れないなら RequiresItem を明示させる。
 		if !m.RequiresItem && bestWeaponAgainst(m, append([]WeaponSeed{bareHands}, weapons...)) == nil {
 			add("%s はどの武器でもダメージが通らない（意図的なら RequiresItem: true を付ける）", m.Name)
@@ -338,14 +350,25 @@ func validate() []string {
 		}
 	}
 
-	// --- 攻略順序 -----------------------------------------------------------
+	// --- 最初の土地は素手で全部倒せること -----------------------------------
+	problems = append(problems, firstAreaMustBeBeatableBareHanded()...)
+
+	// --- 攻略順序と「存在しない組み合わせ」 -----------------------------------
+	//
 	// 上から順に潰していったとき、その時点の手持ちで本当に倒せるか。
-	// 「そのモンスター自身が落とす武器がないと倒せない」ような循環をここで弾く。
+	// 落とす武器がないと自分自身を倒せない循環と、その時点の武器に実在しない
+	// 「攻撃種別 × 属性」を要求しているモンスターを、まとめてここで弾く。
+	//
+	// 武器表全体に対して同じ判定をしても意味がない。最終ティア T12 が 18 通りを
+	// 全て揃えている以上、どの組み合わせも「いつかは」存在してしまうため。
+	// 効くのは「そのモンスターに辿り着いた時点で」という進行順の条件だけ。
 	for _, row := range simulateProgression() {
-		if row.Damage <= 0 {
-			add("%s はここまでに入手できる装備ではダメージが通らない（ドロップの順序が循環している）",
-				row.Monster.Name)
+		if row.Damage > 0 {
+			continue
 		}
+		m := row.Monster
+		add("%s はここまでに入手できる装備ではダメージが通らない（通る組み合わせ: %s / その時点で持っている組み合わせ: %s）",
+			m.Name, describeCombos(openCombos(m)), describeCombos(row.OwnedCombos))
 	}
 
 	sort.Strings(problems)
@@ -362,6 +385,9 @@ type progressRow struct {
 	Loadout     string // 想定した武器（+ 併用するデバフアイテム）
 	Damage      int    // こちらの 1 ターンの与ダメージ
 	TakenDamage int    // 相手の 1 ターンの与ダメージ
+	// OwnedCombos はその時点で入手済みの武器が持つ「攻撃種別 × 属性」。
+	// ダメージが通らなかったときに、何が足りないのかを示すために使う。
+	OwnedCombos [][2]string
 }
 
 // simulateProgression は index_number 順に上から潰していく想定で、
@@ -376,7 +402,12 @@ func simulateProgression() []progressRow {
 	rows := make([]progressRow, 0, len(monsters))
 	for _, m := range monsters {
 		level := m.RecommendedLevel
-		row := progressRow{Monster: m, Loadout: "—", TakenDamage: monsterDamage(m, level)}
+		row := progressRow{
+			Monster:     m,
+			Loadout:     "—",
+			TakenDamage: monsterDamage(m, level),
+			OwnedCombos: combosOf(ownedWeapons),
+		}
 
 		if best := bestWeaponAgainst(m, ownedWeapons); best != nil {
 			row.Loadout = best.Name
@@ -461,10 +492,11 @@ func playerDamageWithDebuffs(w WeaponSeed, m MonsterSeed, level int, debuffs map
 	if w.ElementAttack != nil {
 		elementAttack = float64(*w.ElementAttack)
 	}
+	// デバフは耐性倍率への加算。simulator.go の calcPlayerDamage と同じ式にすること。
 	physics := float64(w.PhysicsAttack) *
-		(1 - resistanceOf(m.Res, w.PhysicsType)*(1-debuffs[w.PhysicsType]))
+		(1 - resistanceOf(m.Res, w.PhysicsType) + debuffs[w.PhysicsType])
 	element := elementAttack *
-		(1 - resistanceOf(m.Res, w.ElementType)*(1-debuffs[w.ElementType]))
+		(1 - resistanceOf(m.Res, w.ElementType) + debuffs[w.ElementType])
 	base := physics * element
 
 	sign := 1.0
@@ -549,6 +581,114 @@ func bestWeaponAgainst(m MonsterSeed, candidates []WeaponSeed) *WeaponSeed {
 		}
 	}
 	return best
+}
+
+// indexNumberPattern は図鑑番号の形式。武器・アイテム・魔物とも 4 桁の数字。
+// 魔物だけは上位 3 桁が種族、末尾 1 桁が歪みの深さという意味を持つ。
+var indexNumberPattern = regexp.MustCompile(`^\d{4}$`)
+
+// openCombos はそのモンスターにダメージが通る「攻撃種別 × 属性」を返す。
+// 物理耐性・属性耐性がどちらも 1.0 未満であることが条件。
+func openCombos(m MonsterSeed) [][2]string {
+	var out [][2]string
+	for _, p := range []string{Slash, Blow, Shoot} {
+		if resistanceOf(m.Res, p) >= 1.0 {
+			continue
+		}
+		for _, e := range []string{Neutral, Flame, Water, Wood, Shine, Dark} {
+			if resistanceOf(m.Res, e) >= 1.0 {
+				continue
+			}
+			out = append(out, [2]string{p, e})
+		}
+	}
+	return out
+}
+
+// firstAreaMustBeBeatableBareHanded は最初のエリアの不変条件を検査する。
+//
+// 文化祭では QR コードを会場にばらばらに配置するので、プレイヤーがどの個体に
+// 最初に出会うかを制御できない。最初の 1 体が素手で倒せないと、その参加者は
+// 二度と先へ進めない。したがって最初のエリアの全個体について
+//
+//  1. 耐性が 0 以下（等倍か弱点）だけであること
+//     → 素手（打 × 無）の係数が必ず正になり、ダメージが通る
+//  2. 素手で削り切るターン数が、倒されるターン数より十分に短いこと
+//
+// を満たす必要がある。ここは遊べるかどうかに直結するので、
+// バランス調整の都合で緩めてはいけない。
+func firstAreaMustBeBeatableBareHanded() []string {
+	var problems []string
+	if len(monsters) == 0 {
+		return problems
+	}
+	firstArea := monsters[0].Area
+
+	for _, m := range monsters {
+		if m.Area != firstArea {
+			break
+		}
+
+		for axis, v := range resistanceMap(m.Res) {
+			if v > 0 {
+				problems = append(problems, fmt.Sprintf(
+					"%s（%s）の %s 耐性が %+.1f。最初のエリアは素手が必ず通るよう耐性 0 以下だけにすること",
+					m.Name, firstArea, axis, v))
+			}
+		}
+
+		dmg := playerDamage(bareHands, m, m.RecommendedLevel)
+		if dmg <= 0 {
+			problems = append(problems, fmt.Sprintf(
+				"%s（%s）に素手のダメージが通らない", m.Name, firstArea))
+			continue
+		}
+		taken := monsterDamage(m, m.RecommendedLevel)
+		if taken <= 0 {
+			continue
+		}
+		killTurns := float64(m.HitPoint) / float64(dmg)
+		deathTurns := float64(playerMaxHP(m.RecommendedLevel)) / float64(taken)
+		// 2 倍の余裕を要求する。回復アイテムなしで確実に勝ち切れる水準。
+		if killTurns*2 > deathTurns {
+			problems = append(problems, fmt.Sprintf(
+				"%s（%s）は素手 Lv%d で余裕がない（撃破 %.1f ターン / 被撃破 %.1f ターン）",
+				m.Name, firstArea, m.RecommendedLevel, killTurns, deathTurns))
+		}
+	}
+	return problems
+}
+
+// combosOf は武器の集合が持つ「攻撃種別 × 属性」を重複なく返す。
+func combosOf(ws []WeaponSeed) [][2]string {
+	seen := map[string]bool{}
+	var out [][2]string
+	for _, w := range ws {
+		key := w.PhysicsType + "/" + w.ElementType
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		out = append(out, [2]string{w.PhysicsType, w.ElementType})
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i][0] != out[j][0] {
+			return out[i][0] < out[j][0]
+		}
+		return out[i][1] < out[j][1]
+	})
+	return out
+}
+
+func describeCombos(combos [][2]string) string {
+	if len(combos) == 0 {
+		return "なし"
+	}
+	parts := make([]string, 0, len(combos))
+	for _, c := range combos {
+		parts = append(parts, c[0]+"×"+c[1])
+	}
+	return strings.Join(parts, ", ")
 }
 
 func resistanceOf(r Resistance, typ string) float64 {

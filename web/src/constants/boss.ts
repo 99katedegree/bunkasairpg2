@@ -27,8 +27,9 @@ export const boss: Boss = {
   maxHitPoint: 4000,
   hitPoint: 4000,
   experiencePoint: 16000,
-  // 表示用。モンスター側の推奨レベルは最大90なので、その先の相手という位置づけ。
-  recommendedLevel: 90,
+  // 表示用。通常モンスターの推奨レベルは最大 90 で、500 体を 1 周すると
+  // ちょうど Lv90 に届く。ボスはその先の到達点なので区切りのいい 100 にしてある。
+  recommendedLevel: 100,
   slash: 1.0,
   blow: 1.0,
   shoot: 1.0,

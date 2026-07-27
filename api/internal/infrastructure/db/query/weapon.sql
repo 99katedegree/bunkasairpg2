@@ -1,5 +1,6 @@
 -- name: GetAllWeaponIDs :many
-SELECT id FROM weapons ORDER BY id;
+-- 図鑑番号は 4 桁ゼロ埋めの数字なので、文字列順でそのまま番号順になる。
+SELECT id FROM weapons ORDER BY index_number;
 
 -- name: GetWeaponByID :one
 SELECT * FROM weapons WHERE id = ? LIMIT 1;

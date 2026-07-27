@@ -20,7 +20,7 @@ type Weapon struct {
 var BareHands = Weapon{
 	ID:            0,
 	Name:          "素手",
-	IndexNumber:   "W000",
+	IndexNumber:   "0000",
 	PhysicsAttack: 10,
 	ElementAttack: nil, // nil は計算上 1 として扱われる
 	PhysicsType:   "blow",
