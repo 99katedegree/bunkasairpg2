@@ -241,6 +241,15 @@ type ItemResponse struct {
 	Target *string `json:"target,omitempty"`
 }
 
+// ItemSummaryResponse 管理画面向けのアイテムの要約。画像は含まない（フロントの関心のため）。
+type ItemSummaryResponse struct {
+	Id int `json:"id"`
+
+	// IndexNumber 図鑑番号（4 桁の数字）
+	IndexNumber string `json:"indexNumber"`
+	Name        string `json:"name"`
+}
+
 // MeResponse defines model for MeResponse.
 type MeResponse struct {
 	AvatarImageUrl  *string            `json:"avatarImageUrl,omitempty"`
@@ -276,6 +285,15 @@ type MonsterDetailResponse struct {
 	Water            float32            `json:"water"`
 	Weapon           *WeaponResponse    `json:"weapon,omitempty"`
 	Wood             float32            `json:"wood"`
+}
+
+// MonsterSummaryResponse 管理画面向けのモンスターの要約。画像は含まない（フロントの関心のため）。
+type MonsterSummaryResponse struct {
+	Id openapi_types.UUID `json:"id"`
+
+	// IndexNumber 図鑑番号（4 桁の数字）
+	IndexNumber string `json:"indexNumber"`
+	Name        string `json:"name"`
 }
 
 // PhysicsType defines model for PhysicsType.
@@ -325,6 +343,15 @@ type WeaponResponse struct {
 	Name          string      `json:"name"`
 	PhysicsAttack float32     `json:"physicsAttack"`
 	PhysicsType   PhysicsType `json:"physicsType"`
+}
+
+// WeaponSummaryResponse 管理画面向けの武器の要約。画像は含まない（フロントの関心のため）。
+type WeaponSummaryResponse struct {
+	Id int `json:"id"`
+
+	// IndexNumber 図鑑番号（4 桁の数字）
+	IndexNumber string `json:"indexNumber"`
+	Name        string `json:"name"`
 }
 
 // Limit defines model for Limit.
@@ -434,12 +461,12 @@ type ServerInterface interface {
 	// 所持アイテム一覧取得
 	// (GET /items)
 	GetItems(ctx echo.Context) error
-	// [管理者専用] 全アイテムID一覧取得
-	// (GET /items/ids)
-	GetItemIds(ctx echo.Context) error
 	// アイテム図鑑取得
 	// (GET /items/index)
 	GetMeItemIndex(ctx echo.Context, params GetMeItemIndexParams) error
+	// [管理者専用] 全アイテムの一覧取得
+	// (GET /items/summaries)
+	GetItemSummaries(ctx echo.Context) error
 	// ログインユーザー情報取得
 	// (GET /me)
 	GetMe(ctx echo.Context) error
@@ -449,24 +476,24 @@ type ServerInterface interface {
 	// [管理者専用] 全モンスターの暗号化バトルトークン一覧取得
 	// (GET /monsters/battle-tokens)
 	GetMonsterBattleTokens(ctx echo.Context) error
-	// [管理者専用] 全モンスターID一覧取得
-	// (GET /monsters/ids)
-	GetMonsterIds(ctx echo.Context) error
 	// モンスター図鑑取得
 	// (GET /monsters/index)
 	GetMonsters(ctx echo.Context, params GetMonstersParams) error
+	// [管理者専用] 全モンスターの一覧取得
+	// (GET /monsters/summaries)
+	GetMonsterSummaries(ctx echo.Context) error
 	// モンスター詳細取得
 	// (GET /monsters/{monsterId})
 	GetMonster(ctx echo.Context, monsterId openapi_types.UUID) error
 	// 所持武器一覧取得
 	// (GET /weapons)
 	GetWeapons(ctx echo.Context) error
-	// [管理者専用] 全武器ID一覧取得
-	// (GET /weapons/ids)
-	GetWeaponIds(ctx echo.Context) error
 	// 武器図鑑取得
 	// (GET /weapons/index)
 	GetMeWeaponIndex(ctx echo.Context, params GetMeWeaponIndexParams) error
+	// [管理者専用] 全武器の一覧取得
+	// (GET /weapons/summaries)
+	GetWeaponSummaries(ctx echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -611,17 +638,6 @@ func (w *ServerInterfaceWrapper) GetItems(ctx echo.Context) error {
 	return err
 }
 
-// GetItemIds converts echo context to params.
-func (w *ServerInterfaceWrapper) GetItemIds(ctx echo.Context) error {
-	var err error
-
-	ctx.Set(string(BearerAuthScopes), []string{})
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetItemIds(ctx)
-	return err
-}
-
 // GetMeItemIndex converts echo context to params.
 func (w *ServerInterfaceWrapper) GetMeItemIndex(ctx echo.Context) error {
 	var err error
@@ -646,6 +662,17 @@ func (w *ServerInterfaceWrapper) GetMeItemIndex(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetMeItemIndex(ctx, params)
+	return err
+}
+
+// GetItemSummaries converts echo context to params.
+func (w *ServerInterfaceWrapper) GetItemSummaries(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(string(BearerAuthScopes), []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetItemSummaries(ctx)
 	return err
 }
 
@@ -682,17 +709,6 @@ func (w *ServerInterfaceWrapper) GetMonsterBattleTokens(ctx echo.Context) error 
 	return err
 }
 
-// GetMonsterIds converts echo context to params.
-func (w *ServerInterfaceWrapper) GetMonsterIds(ctx echo.Context) error {
-	var err error
-
-	ctx.Set(string(BearerAuthScopes), []string{})
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetMonsterIds(ctx)
-	return err
-}
-
 // GetMonsters converts echo context to params.
 func (w *ServerInterfaceWrapper) GetMonsters(ctx echo.Context) error {
 	var err error
@@ -717,6 +733,17 @@ func (w *ServerInterfaceWrapper) GetMonsters(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetMonsters(ctx, params)
+	return err
+}
+
+// GetMonsterSummaries converts echo context to params.
+func (w *ServerInterfaceWrapper) GetMonsterSummaries(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(string(BearerAuthScopes), []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetMonsterSummaries(ctx)
 	return err
 }
 
@@ -749,17 +776,6 @@ func (w *ServerInterfaceWrapper) GetWeapons(ctx echo.Context) error {
 	return err
 }
 
-// GetWeaponIds converts echo context to params.
-func (w *ServerInterfaceWrapper) GetWeaponIds(ctx echo.Context) error {
-	var err error
-
-	ctx.Set(string(BearerAuthScopes), []string{})
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetWeaponIds(ctx)
-	return err
-}
-
 // GetMeWeaponIndex converts echo context to params.
 func (w *ServerInterfaceWrapper) GetMeWeaponIndex(ctx echo.Context) error {
 	var err error
@@ -784,6 +800,17 @@ func (w *ServerInterfaceWrapper) GetMeWeaponIndex(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetMeWeaponIndex(ctx, params)
+	return err
+}
+
+// GetWeaponSummaries converts echo context to params.
+func (w *ServerInterfaceWrapper) GetWeaponSummaries(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(string(BearerAuthScopes), []string{})
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetWeaponSummaries(ctx)
 	return err
 }
 
@@ -847,17 +874,17 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options 
 	router.GET(options.BaseURL+"/health", wrapper.HealthCheck, options.OperationMiddlewares["healthCheck"]...)
 	router.POST(options.BaseURL+"/images", wrapper.UploadImage, options.OperationMiddlewares["uploadImage"]...)
 	router.GET(options.BaseURL+"/items", wrapper.GetItems, options.OperationMiddlewares["getItems"]...)
-	router.GET(options.BaseURL+"/items/ids", wrapper.GetItemIds, options.OperationMiddlewares["getItemIds"]...)
 	router.GET(options.BaseURL+"/items/index", wrapper.GetMeItemIndex, options.OperationMiddlewares["getMeItemIndex"]...)
+	router.GET(options.BaseURL+"/items/summaries", wrapper.GetItemSummaries, options.OperationMiddlewares["getItemSummaries"]...)
 	router.GET(options.BaseURL+"/me", wrapper.GetMe, options.OperationMiddlewares["getMe"]...)
 	router.PATCH(options.BaseURL+"/me", wrapper.UpdateMe, options.OperationMiddlewares["updateMe"]...)
 	router.GET(options.BaseURL+"/monsters/battle-tokens", wrapper.GetMonsterBattleTokens, options.OperationMiddlewares["getMonsterBattleTokens"]...)
-	router.GET(options.BaseURL+"/monsters/ids", wrapper.GetMonsterIds, options.OperationMiddlewares["getMonsterIds"]...)
 	router.GET(options.BaseURL+"/monsters/index", wrapper.GetMonsters, options.OperationMiddlewares["getMonsters"]...)
+	router.GET(options.BaseURL+"/monsters/summaries", wrapper.GetMonsterSummaries, options.OperationMiddlewares["getMonsterSummaries"]...)
 	router.GET(options.BaseURL+"/monsters/:monsterId", wrapper.GetMonster, options.OperationMiddlewares["getMonster"]...)
 	router.GET(options.BaseURL+"/weapons", wrapper.GetWeapons, options.OperationMiddlewares["getWeapons"]...)
-	router.GET(options.BaseURL+"/weapons/ids", wrapper.GetWeaponIds, options.OperationMiddlewares["getWeaponIds"]...)
 	router.GET(options.BaseURL+"/weapons/index", wrapper.GetMeWeaponIndex, options.OperationMiddlewares["getMeWeaponIndex"]...)
+	router.GET(options.BaseURL+"/weapons/summaries", wrapper.GetWeaponSummaries, options.OperationMiddlewares["getWeaponSummaries"]...)
 
 }
 
@@ -1373,43 +1400,6 @@ func (response GetItems401JSONResponse) VisitGetItemsResponse(w http.ResponseWri
 	return err
 }
 
-type GetItemIdsRequestObject struct {
-}
-
-type GetItemIdsResponseObject interface {
-	VisitGetItemIdsResponse(w http.ResponseWriter) error
-}
-
-type GetItemIds200JSONResponse struct {
-	Ids []string `json:"ids"`
-}
-
-func (response GetItemIds200JSONResponse) VisitGetItemIdsResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type GetItemIds401JSONResponse struct{ UnauthorizedJSONResponse }
-
-func (response GetItemIds401JSONResponse) VisitGetItemIdsResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(401)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
 type GetMeItemIndexRequestObject struct {
 	Params GetMeItemIndexParams
 }
@@ -1438,6 +1428,43 @@ func (response GetMeItemIndex200JSONResponse) VisitGetMeItemIndexResponse(w http
 type GetMeItemIndex401JSONResponse struct{ UnauthorizedJSONResponse }
 
 func (response GetMeItemIndex401JSONResponse) VisitGetMeItemIndexResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetItemSummariesRequestObject struct {
+}
+
+type GetItemSummariesResponseObject interface {
+	VisitGetItemSummariesResponse(w http.ResponseWriter) error
+}
+
+type GetItemSummaries200JSONResponse struct {
+	Items []ItemSummaryResponse `json:"items"`
+}
+
+func (response GetItemSummaries200JSONResponse) VisitGetItemSummariesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetItemSummaries401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetItemSummaries401JSONResponse) VisitGetItemSummariesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -1553,43 +1580,6 @@ func (response GetMonsterBattleTokens401JSONResponse) VisitGetMonsterBattleToken
 	return err
 }
 
-type GetMonsterIdsRequestObject struct {
-}
-
-type GetMonsterIdsResponseObject interface {
-	VisitGetMonsterIdsResponse(w http.ResponseWriter) error
-}
-
-type GetMonsterIds200JSONResponse struct {
-	Ids []string `json:"ids"`
-}
-
-func (response GetMonsterIds200JSONResponse) VisitGetMonsterIdsResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type GetMonsterIds401JSONResponse struct{ UnauthorizedJSONResponse }
-
-func (response GetMonsterIds401JSONResponse) VisitGetMonsterIdsResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(401)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
 type GetMonstersRequestObject struct {
 	Params GetMonstersParams
 }
@@ -1618,6 +1608,43 @@ func (response GetMonsters200JSONResponse) VisitGetMonstersResponse(w http.Respo
 type GetMonsters401JSONResponse struct{ UnauthorizedJSONResponse }
 
 func (response GetMonsters401JSONResponse) VisitGetMonstersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetMonsterSummariesRequestObject struct {
+}
+
+type GetMonsterSummariesResponseObject interface {
+	VisitGetMonsterSummariesResponse(w http.ResponseWriter) error
+}
+
+type GetMonsterSummaries200JSONResponse struct {
+	Monsters []MonsterSummaryResponse `json:"monsters"`
+}
+
+func (response GetMonsterSummaries200JSONResponse) VisitGetMonsterSummariesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetMonsterSummaries401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetMonsterSummaries401JSONResponse) VisitGetMonsterSummariesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -1718,43 +1745,6 @@ func (response GetWeapons401JSONResponse) VisitGetWeaponsResponse(w http.Respons
 	return err
 }
 
-type GetWeaponIdsRequestObject struct {
-}
-
-type GetWeaponIdsResponseObject interface {
-	VisitGetWeaponIdsResponse(w http.ResponseWriter) error
-}
-
-type GetWeaponIds200JSONResponse struct {
-	Ids []string `json:"ids"`
-}
-
-func (response GetWeaponIds200JSONResponse) VisitGetWeaponIdsResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type GetWeaponIds401JSONResponse struct{ UnauthorizedJSONResponse }
-
-func (response GetWeaponIds401JSONResponse) VisitGetWeaponIdsResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(401)
-	_, err := buf.WriteTo(w)
-	return err
-}
-
 type GetMeWeaponIndexRequestObject struct {
 	Params GetMeWeaponIndexParams
 }
@@ -1783,6 +1773,43 @@ func (response GetMeWeaponIndex200JSONResponse) VisitGetMeWeaponIndexResponse(w 
 type GetMeWeaponIndex401JSONResponse struct{ UnauthorizedJSONResponse }
 
 func (response GetMeWeaponIndex401JSONResponse) VisitGetMeWeaponIndexResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWeaponSummariesRequestObject struct {
+}
+
+type GetWeaponSummariesResponseObject interface {
+	VisitGetWeaponSummariesResponse(w http.ResponseWriter) error
+}
+
+type GetWeaponSummaries200JSONResponse struct {
+	Weapons []WeaponSummaryResponse `json:"weapons"`
+}
+
+func (response GetWeaponSummaries200JSONResponse) VisitGetWeaponSummariesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWeaponSummaries401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetWeaponSummaries401JSONResponse) VisitGetWeaponSummariesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -1835,12 +1862,12 @@ type StrictServerInterface interface {
 	// 所持アイテム一覧取得
 	// (GET /items)
 	GetItems(ctx context.Context, request GetItemsRequestObject) (GetItemsResponseObject, error)
-	// [管理者専用] 全アイテムID一覧取得
-	// (GET /items/ids)
-	GetItemIds(ctx context.Context, request GetItemIdsRequestObject) (GetItemIdsResponseObject, error)
 	// アイテム図鑑取得
 	// (GET /items/index)
 	GetMeItemIndex(ctx context.Context, request GetMeItemIndexRequestObject) (GetMeItemIndexResponseObject, error)
+	// [管理者専用] 全アイテムの一覧取得
+	// (GET /items/summaries)
+	GetItemSummaries(ctx context.Context, request GetItemSummariesRequestObject) (GetItemSummariesResponseObject, error)
 	// ログインユーザー情報取得
 	// (GET /me)
 	GetMe(ctx context.Context, request GetMeRequestObject) (GetMeResponseObject, error)
@@ -1850,24 +1877,24 @@ type StrictServerInterface interface {
 	// [管理者専用] 全モンスターの暗号化バトルトークン一覧取得
 	// (GET /monsters/battle-tokens)
 	GetMonsterBattleTokens(ctx context.Context, request GetMonsterBattleTokensRequestObject) (GetMonsterBattleTokensResponseObject, error)
-	// [管理者専用] 全モンスターID一覧取得
-	// (GET /monsters/ids)
-	GetMonsterIds(ctx context.Context, request GetMonsterIdsRequestObject) (GetMonsterIdsResponseObject, error)
 	// モンスター図鑑取得
 	// (GET /monsters/index)
 	GetMonsters(ctx context.Context, request GetMonstersRequestObject) (GetMonstersResponseObject, error)
+	// [管理者専用] 全モンスターの一覧取得
+	// (GET /monsters/summaries)
+	GetMonsterSummaries(ctx context.Context, request GetMonsterSummariesRequestObject) (GetMonsterSummariesResponseObject, error)
 	// モンスター詳細取得
 	// (GET /monsters/{monsterId})
 	GetMonster(ctx context.Context, request GetMonsterRequestObject) (GetMonsterResponseObject, error)
 	// 所持武器一覧取得
 	// (GET /weapons)
 	GetWeapons(ctx context.Context, request GetWeaponsRequestObject) (GetWeaponsResponseObject, error)
-	// [管理者専用] 全武器ID一覧取得
-	// (GET /weapons/ids)
-	GetWeaponIds(ctx context.Context, request GetWeaponIdsRequestObject) (GetWeaponIdsResponseObject, error)
 	// 武器図鑑取得
 	// (GET /weapons/index)
 	GetMeWeaponIndex(ctx context.Context, request GetMeWeaponIndexRequestObject) (GetMeWeaponIndexResponseObject, error)
+	// [管理者専用] 全武器の一覧取得
+	// (GET /weapons/summaries)
+	GetWeaponSummaries(ctx context.Context, request GetWeaponSummariesRequestObject) (GetWeaponSummariesResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx echo.Context, request any) (any, error)
@@ -2235,29 +2262,6 @@ func (sh *strictHandler) GetItems(ctx echo.Context) error {
 	return nil
 }
 
-// GetItemIds operation middleware
-func (sh *strictHandler) GetItemIds(ctx echo.Context) error {
-	var request GetItemIdsRequestObject
-
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.GetItemIds(ctx.Request().Context(), request.(GetItemIdsRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "GetItemIds")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		return err
-	} else if validResponse, ok := response.(GetItemIdsResponseObject); ok {
-		return validResponse.VisitGetItemIdsResponse(ctx.Response())
-	} else if response != nil {
-		return fmt.Errorf("unexpected response type: %T", response)
-	}
-	return nil
-}
-
 // GetMeItemIndex operation middleware
 func (sh *strictHandler) GetMeItemIndex(ctx echo.Context, params GetMeItemIndexParams) error {
 	var request GetMeItemIndexRequestObject
@@ -2277,6 +2281,29 @@ func (sh *strictHandler) GetMeItemIndex(ctx echo.Context, params GetMeItemIndexP
 		return err
 	} else if validResponse, ok := response.(GetMeItemIndexResponseObject); ok {
 		return validResponse.VisitGetMeItemIndexResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// GetItemSummaries operation middleware
+func (sh *strictHandler) GetItemSummaries(ctx echo.Context) error {
+	var request GetItemSummariesRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetItemSummaries(ctx.Request().Context(), request.(GetItemSummariesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetItemSummaries")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetItemSummariesResponseObject); ok {
+		return validResponse.VisitGetItemSummariesResponse(ctx.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}
@@ -2358,29 +2385,6 @@ func (sh *strictHandler) GetMonsterBattleTokens(ctx echo.Context) error {
 	return nil
 }
 
-// GetMonsterIds operation middleware
-func (sh *strictHandler) GetMonsterIds(ctx echo.Context) error {
-	var request GetMonsterIdsRequestObject
-
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.GetMonsterIds(ctx.Request().Context(), request.(GetMonsterIdsRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "GetMonsterIds")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		return err
-	} else if validResponse, ok := response.(GetMonsterIdsResponseObject); ok {
-		return validResponse.VisitGetMonsterIdsResponse(ctx.Response())
-	} else if response != nil {
-		return fmt.Errorf("unexpected response type: %T", response)
-	}
-	return nil
-}
-
 // GetMonsters operation middleware
 func (sh *strictHandler) GetMonsters(ctx echo.Context, params GetMonstersParams) error {
 	var request GetMonstersRequestObject
@@ -2400,6 +2404,29 @@ func (sh *strictHandler) GetMonsters(ctx echo.Context, params GetMonstersParams)
 		return err
 	} else if validResponse, ok := response.(GetMonstersResponseObject); ok {
 		return validResponse.VisitGetMonstersResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// GetMonsterSummaries operation middleware
+func (sh *strictHandler) GetMonsterSummaries(ctx echo.Context) error {
+	var request GetMonsterSummariesRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetMonsterSummaries(ctx.Request().Context(), request.(GetMonsterSummariesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetMonsterSummaries")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetMonsterSummariesResponseObject); ok {
+		return validResponse.VisitGetMonsterSummariesResponse(ctx.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}
@@ -2454,29 +2481,6 @@ func (sh *strictHandler) GetWeapons(ctx echo.Context) error {
 	return nil
 }
 
-// GetWeaponIds operation middleware
-func (sh *strictHandler) GetWeaponIds(ctx echo.Context) error {
-	var request GetWeaponIdsRequestObject
-
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.GetWeaponIds(ctx.Request().Context(), request.(GetWeaponIdsRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "GetWeaponIds")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		return err
-	} else if validResponse, ok := response.(GetWeaponIdsResponseObject); ok {
-		return validResponse.VisitGetWeaponIdsResponse(ctx.Response())
-	} else if response != nil {
-		return fmt.Errorf("unexpected response type: %T", response)
-	}
-	return nil
-}
-
 // GetMeWeaponIndex operation middleware
 func (sh *strictHandler) GetMeWeaponIndex(ctx echo.Context, params GetMeWeaponIndexParams) error {
 	var request GetMeWeaponIndexRequestObject
@@ -2496,6 +2500,29 @@ func (sh *strictHandler) GetMeWeaponIndex(ctx echo.Context, params GetMeWeaponIn
 		return err
 	} else if validResponse, ok := response.(GetMeWeaponIndexResponseObject); ok {
 		return validResponse.VisitGetMeWeaponIndexResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// GetWeaponSummaries operation middleware
+func (sh *strictHandler) GetWeaponSummaries(ctx echo.Context) error {
+	var request GetWeaponSummariesRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetWeaponSummaries(ctx.Request().Context(), request.(GetWeaponSummariesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetWeaponSummaries")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetWeaponSummariesResponseObject); ok {
+		return validResponse.VisitGetWeaponSummariesResponse(ctx.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}

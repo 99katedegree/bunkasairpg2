@@ -45,17 +45,21 @@ func (s *Server) GetMonsters(ctx context.Context, req genapi.GetMonstersRequestO
 	return genapi.GetMonsters200JSONResponse{Monsters: resp, Total: int(total)}, nil
 }
 
-func (s *Server) GetMonsterIds(ctx context.Context, req genapi.GetMonsterIdsRequestObject) (genapi.GetMonsterIdsResponseObject, error) {
+func (s *Server) GetMonsterSummaries(ctx context.Context, req genapi.GetMonsterSummariesRequestObject) (genapi.GetMonsterSummariesResponseObject, error) {
 	echoCtx, ok := mw.GetEchoContext(ctx)
 	if !ok || !mw.IsAdmin(echoCtx) {
-		return genapi.GetMonsterIds401JSONResponse{UnauthorizedJSONResponse: genapi.UnauthorizedJSONResponse{Errors: []string{"UNAUTHORIZED"}}}, nil
+		return genapi.GetMonsterSummaries401JSONResponse{UnauthorizedJSONResponse: genapi.UnauthorizedJSONResponse{Errors: []string{"UNAUTHORIZED"}}}, nil
 	}
-	ids, err := s.monsterUC.GetAllIDs(ctx)
+	rows, err := s.monsterUC.GetAllSummaries(ctx)
 	if err != nil {
 		_, body := errResponse(err)
-		return genapi.GetMonsterIds401JSONResponse{UnauthorizedJSONResponse: genapi.UnauthorizedJSONResponse{Errors: body.Errors}}, nil
+		return genapi.GetMonsterSummaries401JSONResponse{UnauthorizedJSONResponse: genapi.UnauthorizedJSONResponse{Errors: body.Errors}}, nil
 	}
-	return genapi.GetMonsterIds200JSONResponse{Ids: ids}, nil
+	out := make([]genapi.MonsterSummaryResponse, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, genapi.MonsterSummaryResponse{Id: r.ID, Name: r.Name, IndexNumber: r.IndexNumber})
+	}
+	return genapi.GetMonsterSummaries200JSONResponse{Monsters: out}, nil
 }
 
 func (s *Server) GetMonsterBattleTokens(ctx context.Context, req genapi.GetMonsterBattleTokensRequestObject) (genapi.GetMonsterBattleTokensResponseObject, error) {

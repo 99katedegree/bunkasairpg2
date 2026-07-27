@@ -26,6 +26,7 @@ const getAllMonsterIDs = `-- name: GetAllMonsterIDs :many
 SELECT id FROM monsters ORDER BY index_number
 `
 
+// バトルトークン生成用。QR に埋める UUID が要る。
 func (q *Queries) GetAllMonsterIDs(ctx context.Context) ([]string, error) {
 	rows, err := q.db.QueryContext(ctx, getAllMonsterIDs)
 	if err != nil {
@@ -39,6 +40,40 @@ func (q *Queries) GetAllMonsterIDs(ctx context.Context) ([]string, error) {
 			return nil, err
 		}
 		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAllMonsterSummaries = `-- name: GetAllMonsterSummaries :many
+SELECT id, name, index_number FROM monsters ORDER BY index_number
+`
+
+type GetAllMonsterSummariesRow struct {
+	ID          string `db:"id" json:"id"`
+	Name        string `db:"name" json:"name"`
+	IndexNumber string `db:"index_number" json:"index_number"`
+}
+
+// 管理画面の一覧用。図鑑番号は 4 桁ゼロ埋めなので文字列順がそのまま番号順。
+func (q *Queries) GetAllMonsterSummaries(ctx context.Context) ([]GetAllMonsterSummariesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllMonsterSummaries)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllMonsterSummariesRow
+	for rows.Next() {
+		var i GetAllMonsterSummariesRow
+		if err := rows.Scan(&i.ID, &i.Name, &i.IndexNumber); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

@@ -2,27 +2,26 @@ package handler
 
 import (
 	"context"
-	"strconv"
 
 	genapi "github.com/99katedegree/bunkasairpg2/api/gen/api"
 	mw "github.com/99katedegree/bunkasairpg2/api/internal/adapter/middleware"
 )
 
-func (s *Server) GetItemIds(ctx context.Context, req genapi.GetItemIdsRequestObject) (genapi.GetItemIdsResponseObject, error) {
+func (s *Server) GetItemSummaries(ctx context.Context, req genapi.GetItemSummariesRequestObject) (genapi.GetItemSummariesResponseObject, error) {
 	echoCtx, ok := mw.GetEchoContext(ctx)
 	if !ok || !mw.IsAdmin(echoCtx) {
-		return genapi.GetItemIds401JSONResponse{UnauthorizedJSONResponse: genapi.UnauthorizedJSONResponse{Errors: []string{"UNAUTHORIZED"}}}, nil
+		return genapi.GetItemSummaries401JSONResponse{UnauthorizedJSONResponse: genapi.UnauthorizedJSONResponse{Errors: []string{"UNAUTHORIZED"}}}, nil
 	}
-	ids, err := s.itemUC.GetAllIDs(ctx)
+	rows, err := s.itemUC.GetAllSummaries(ctx)
 	if err != nil {
 		_, body := errResponse(err)
-		return genapi.GetItemIds401JSONResponse{UnauthorizedJSONResponse: genapi.UnauthorizedJSONResponse{Errors: body.Errors}}, nil
+		return genapi.GetItemSummaries401JSONResponse{UnauthorizedJSONResponse: genapi.UnauthorizedJSONResponse{Errors: body.Errors}}, nil
 	}
-	strIDs := make([]string, 0, len(ids))
-	for _, id := range ids {
-		strIDs = append(strIDs, strconv.FormatInt(id, 10))
+	out := make([]genapi.ItemSummaryResponse, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, genapi.ItemSummaryResponse{Id: int(r.ID), Name: r.Name, IndexNumber: r.IndexNumber})
 	}
-	return genapi.GetItemIds200JSONResponse{Ids: strIDs}, nil
+	return genapi.GetItemSummaries200JSONResponse{Items: out}, nil
 }
 
 func (s *Server) GetItems(ctx context.Context, req genapi.GetItemsRequestObject) (genapi.GetItemsResponseObject, error) {

@@ -51,24 +51,30 @@ func (q *Queries) DeleteUserItemIfZero(ctx context.Context, arg DeleteUserItemIf
 	return err
 }
 
-const getAllItemIDs = `-- name: GetAllItemIDs :many
-SELECT id FROM items ORDER BY index_number
+const getAllItemSummaries = `-- name: GetAllItemSummaries :many
+SELECT id, name, index_number FROM items ORDER BY index_number
 `
 
-// 図鑑番号は 4 桁ゼロ埋めの数字なので、文字列順でそのまま番号順になる。
-func (q *Queries) GetAllItemIDs(ctx context.Context) ([]int64, error) {
-	rows, err := q.db.QueryContext(ctx, getAllItemIDs)
+type GetAllItemSummariesRow struct {
+	ID          int64  `db:"id" json:"id"`
+	Name        string `db:"name" json:"name"`
+	IndexNumber string `db:"index_number" json:"index_number"`
+}
+
+// 管理画面の一覧用。図鑑番号は 4 桁ゼロ埋めなので文字列順がそのまま番号順。
+func (q *Queries) GetAllItemSummaries(ctx context.Context) ([]GetAllItemSummariesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllItemSummaries)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []int64
+	var items []GetAllItemSummariesRow
 	for rows.Next() {
-		var id int64
-		if err := rows.Scan(&id); err != nil {
+		var i GetAllItemSummariesRow
+		if err := rows.Scan(&i.ID, &i.Name, &i.IndexNumber); err != nil {
 			return nil, err
 		}
-		items = append(items, id)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

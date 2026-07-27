@@ -12,7 +12,7 @@ import type {
 } from 'swr';
 
 import type {
-  GetItemIds200,
+  GetItemSummaries200,
   GetItems200,
   GetMeItemIndex200,
   GetMeItemIndexParams,
@@ -179,39 +179,42 @@ export const useGetMeItemIndex = <TError = Promise<UnauthorizedResponse>>(
     ...query
   }
 }
-export type getItemIdsResponse200 = {
-  data: GetItemIds200
+export type getItemSummariesResponse200 = {
+  data: GetItemSummaries200
   status: 200
 }
 
-export type getItemIdsResponse401 = {
+export type getItemSummariesResponse401 = {
   data: UnauthorizedResponse
   status: 401
 }
 
-export type getItemIdsResponseSuccess = (getItemIdsResponse200) & {
+export type getItemSummariesResponseSuccess = (getItemSummariesResponse200) & {
   headers: Headers;
 };
-export type getItemIdsResponseError = (getItemIdsResponse401) & {
+export type getItemSummariesResponseError = (getItemSummariesResponse401) & {
   headers: Headers;
 };
 
-export type getItemIdsResponse = (getItemIdsResponseSuccess | getItemIdsResponseError)
+export type getItemSummariesResponse = (getItemSummariesResponseSuccess | getItemSummariesResponseError)
 
-export const getGetItemIdsUrl = () => {
-
-
+export const getGetItemSummariesUrl = () => {
 
 
-  return `http://localhost:8085/items/ids`
+
+
+  return `http://localhost:8085/items/summaries`
 }
 
 /**
- * @summary [管理者専用] 全アイテムID一覧取得
+ * マスタに登録されている全アイテムを図鑑番号の昇順で返す。管理画面が
+ * 「何が存在するか」を把握するために使う。どの画像を割り当てるかは
+ * フロント側の関心なので、ここでは画像情報は一切返さない。
+ * @summary [管理者専用] 全アイテムの一覧取得
  */
-export const getItemIds = async ( options?: RequestInit): Promise<getItemIdsResponse> => {
+export const getItemSummaries = async ( options?: RequestInit): Promise<getItemSummariesResponse> => {
 
-  const res = await fetch(getGetItemIdsUrl(),
+  const res = await fetch(getGetItemSummariesUrl(),
   {
     ...options,
     method: 'GET'
@@ -223,28 +226,28 @@ export const getItemIds = async ( options?: RequestInit): Promise<getItemIdsResp
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: getItemIdsResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as getItemIdsResponse
+  const data: getItemSummariesResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getItemSummariesResponse
 }
 
 
 
 
-export const getGetItemIdsKey = () => [`http://localhost:8085/items/ids`] as const;
+export const getGetItemSummariesKey = () => [`http://localhost:8085/items/summaries`] as const;
 
-export type GetItemIdsQueryResult = NonNullable<Awaited<ReturnType<typeof getItemIds>>>
+export type GetItemSummariesQueryResult = NonNullable<Awaited<ReturnType<typeof getItemSummaries>>>
 
 /**
- * @summary [管理者専用] 全アイテムID一覧取得
+ * @summary [管理者専用] 全アイテムの一覧取得
  */
-export const useGetItemIds = <TError = Promise<UnauthorizedResponse>>(
-   options?: { swr?:SWRConfiguration<Awaited<ReturnType<typeof getItemIds>>, TError> & { swrKey?: Key, enabled?: boolean }, fetch?: RequestInit }
+export const useGetItemSummaries = <TError = Promise<UnauthorizedResponse>>(
+   options?: { swr?:SWRConfiguration<Awaited<ReturnType<typeof getItemSummaries>>, TError> & { swrKey?: Key, enabled?: boolean }, fetch?: RequestInit }
 ) => {
   const {swr: swrOptions, fetch: fetchOptions} = options ?? {}
 
   const isEnabled = swrOptions?.enabled !== false
-  const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetItemIdsKey() : null);
-  const swrFn = () => getItemIds(fetchOptions)
+  const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetItemSummariesKey() : null);
+  const swrFn = () => getItemSummaries(fetchOptions)
 
   const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions)
 

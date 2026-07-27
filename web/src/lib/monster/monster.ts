@@ -15,7 +15,7 @@ import type {
   ErrorResponse,
   GetMonster200,
   GetMonsterBattleTokens200,
-  GetMonsterIds200,
+  GetMonsterSummaries200,
   GetMonsters200,
   GetMonstersParams,
   UnauthorizedResponse
@@ -107,39 +107,42 @@ export const useGetMonsters = <TError = Promise<UnauthorizedResponse>>(
     ...query
   }
 }
-export type getMonsterIdsResponse200 = {
-  data: GetMonsterIds200
+export type getMonsterSummariesResponse200 = {
+  data: GetMonsterSummaries200
   status: 200
 }
 
-export type getMonsterIdsResponse401 = {
+export type getMonsterSummariesResponse401 = {
   data: UnauthorizedResponse
   status: 401
 }
 
-export type getMonsterIdsResponseSuccess = (getMonsterIdsResponse200) & {
+export type getMonsterSummariesResponseSuccess = (getMonsterSummariesResponse200) & {
   headers: Headers;
 };
-export type getMonsterIdsResponseError = (getMonsterIdsResponse401) & {
+export type getMonsterSummariesResponseError = (getMonsterSummariesResponse401) & {
   headers: Headers;
 };
 
-export type getMonsterIdsResponse = (getMonsterIdsResponseSuccess | getMonsterIdsResponseError)
+export type getMonsterSummariesResponse = (getMonsterSummariesResponseSuccess | getMonsterSummariesResponseError)
 
-export const getGetMonsterIdsUrl = () => {
-
-
+export const getGetMonsterSummariesUrl = () => {
 
 
-  return `http://localhost:8085/monsters/ids`
+
+
+  return `http://localhost:8085/monsters/summaries`
 }
 
 /**
- * @summary [管理者専用] 全モンスターID一覧取得
+ * マスタに登録されている全モンスターを図鑑番号の昇順で返す。管理画面が
+ * 「何が存在するか」を把握するために使う。どの画像を割り当てるかは
+ * フロント側の関心なので、ここでは画像情報は一切返さない。
+ * @summary [管理者専用] 全モンスターの一覧取得
  */
-export const getMonsterIds = async ( options?: RequestInit): Promise<getMonsterIdsResponse> => {
+export const getMonsterSummaries = async ( options?: RequestInit): Promise<getMonsterSummariesResponse> => {
 
-  const res = await fetch(getGetMonsterIdsUrl(),
+  const res = await fetch(getGetMonsterSummariesUrl(),
   {
     ...options,
     method: 'GET'
@@ -151,28 +154,28 @@ export const getMonsterIds = async ( options?: RequestInit): Promise<getMonsterI
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: getMonsterIdsResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as getMonsterIdsResponse
+  const data: getMonsterSummariesResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getMonsterSummariesResponse
 }
 
 
 
 
-export const getGetMonsterIdsKey = () => [`http://localhost:8085/monsters/ids`] as const;
+export const getGetMonsterSummariesKey = () => [`http://localhost:8085/monsters/summaries`] as const;
 
-export type GetMonsterIdsQueryResult = NonNullable<Awaited<ReturnType<typeof getMonsterIds>>>
+export type GetMonsterSummariesQueryResult = NonNullable<Awaited<ReturnType<typeof getMonsterSummaries>>>
 
 /**
- * @summary [管理者専用] 全モンスターID一覧取得
+ * @summary [管理者専用] 全モンスターの一覧取得
  */
-export const useGetMonsterIds = <TError = Promise<UnauthorizedResponse>>(
-   options?: { swr?:SWRConfiguration<Awaited<ReturnType<typeof getMonsterIds>>, TError> & { swrKey?: Key, enabled?: boolean }, fetch?: RequestInit }
+export const useGetMonsterSummaries = <TError = Promise<UnauthorizedResponse>>(
+   options?: { swr?:SWRConfiguration<Awaited<ReturnType<typeof getMonsterSummaries>>, TError> & { swrKey?: Key, enabled?: boolean }, fetch?: RequestInit }
 ) => {
   const {swr: swrOptions, fetch: fetchOptions} = options ?? {}
 
   const isEnabled = swrOptions?.enabled !== false
-  const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetMonsterIdsKey() : null);
-  const swrFn = () => getMonsterIds(fetchOptions)
+  const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetMonsterSummariesKey() : null);
+  const swrFn = () => getMonsterSummaries(fetchOptions)
 
   const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions)
 

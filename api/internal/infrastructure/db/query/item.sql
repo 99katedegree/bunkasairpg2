@@ -1,6 +1,6 @@
--- name: GetAllItemIDs :many
--- 図鑑番号は 4 桁ゼロ埋めの数字なので、文字列順でそのまま番号順になる。
-SELECT id FROM items ORDER BY index_number;
+-- name: GetAllItemSummaries :many
+-- 管理画面の一覧用。図鑑番号は 4 桁ゼロ埋めなので文字列順がそのまま番号順。
+SELECT id, name, index_number FROM items ORDER BY index_number;
 
 -- name: GetItemByID :one
 SELECT i.id, i.name, i.index_number, i.effect_type, i.created_at, i.updated_at,

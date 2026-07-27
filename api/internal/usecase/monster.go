@@ -27,16 +27,8 @@ func (u *MonsterUsecase) GetCatalog(ctx context.Context, userID uuid.UUID, offse
 	return u.monsterRepo.FindCatalogByUserID(ctx, userID, offset, limit)
 }
 
-func (u *MonsterUsecase) GetAllIDs(ctx context.Context) ([]string, error) {
-	ids, err := u.monsterRepo.FindAllIDs(ctx)
-	if err != nil {
-		return nil, err
-	}
-	result := make([]string, 0, len(ids))
-	for _, id := range ids {
-		result = append(result, id.String())
-	}
-	return result, nil
+func (u *MonsterUsecase) GetAllSummaries(ctx context.Context) ([]entity.MonsterSummary, error) {
+	return u.monsterRepo.FindAllSummaries(ctx)
 }
 
 func (u *MonsterUsecase) GetBattleTokens(ctx context.Context) ([]string, error) {

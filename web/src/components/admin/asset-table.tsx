@@ -2,38 +2,57 @@
 
 import { useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle2, Loader2, RefreshCw } from "lucide-react";
-import { getMonsterIds } from "@/lib/monster/monster";
-import { getWeaponIds } from "@/lib/weapon/weapon";
-import { getItemIds } from "@/lib/item/item";
+import { getMonsterSummaries } from "@/lib/monster/monster";
+import { getWeaponSummaries } from "@/lib/weapon/weapon";
+import { getItemSummaries } from "@/lib/item/item";
 import { monsterImages } from "@/constants/monster-images";
 import { weaponImages } from "@/constants/weapon-images";
 import { itemImages } from "@/constants/item-images";
 
 type AssetType = "monster" | "weapon" | "item";
 
+// バックエンドが返すのは「マスタに何が存在するか」だけ。
+// どの画像を当てるかはフロントの関心なので constants/*-images.ts が持つ。
+type Summary = { id: string | number; name: string; indexNumber: string };
+
 type AssetRow = {
   index: number;
-  id: string;
+  id: string | number | null;
+  name: string | null;
+  indexNumber: string;
   imageUrl: string | null;
   notes: string[];
 };
 
-function buildRows(backendIds: string[], imageMap: Record<string, string>): AssetRow[] {
-  const backendSet = new Set(backendIds);
-  const imageMapSet = new Set(Object.keys(imageMap));
+// buildRows は「マスタにあるもの」と「画像マップのキー」を図鑑番号で突き合わせる。
+//
+// summaries は API が配列を返さなかった場合に undefined になりうる。
+// 管理画面が真っ白になるより、画像マップ側だけでも一覧できるほうがよい。
+function buildRows(
+  summaries: Summary[] | undefined,
+  imageMap: Record<string, string>
+): AssetRow[] {
+  const rows = summaries ?? [];
+  const byNumber = new Map(rows.map((r) => [r.indexNumber, r]));
 
-  const allIds = [...new Set([...backendIds, ...Object.keys(imageMap)])];
+  const all = [
+    ...new Set([...byNumber.keys(), ...Object.keys(imageMap)]),
+  ].sort();
 
-  return allIds.map((id, i) => {
-    const inBackend = backendSet.has(id);
-    const imageUrl = imageMap[id] ?? null;
+  return all.map((indexNumber, i) => {
+    const master = byNumber.get(indexNumber);
+    const imageUrl = imageMap[indexNumber] ?? null;
     const notes: string[] = [];
-    if (!inBackend) notes.push("対応するIDがありません");
+    if (!master) notes.push("DB に該当する図鑑番号がありません");
     if (imageUrl === null) notes.push("画像パスが未設定です");
-    if (inBackend && imageUrl !== null && notes.length === 0) {
-      // ok — no notes needed
-    }
-    return { index: i + 1, id, imageUrl, notes };
+    return {
+      index: i + 1,
+      id: master?.id ?? null,
+      name: master?.name ?? null,
+      indexNumber,
+      imageUrl,
+      notes,
+    };
   });
 }
 
@@ -65,29 +84,29 @@ export function AssetTable({ adminToken }: { adminToken: string }) {
     setStates((prev) => ({ ...prev, [type]: { ...prev[type], loading: true, error: null } }));
 
     try {
-      let ids: string[] = [];
+      let summaries: Summary[] = [];
       let imageMap: Record<string, string>;
 
       if (type === "monster") {
-        const res = await getMonsterIds(authInit);
+        const res = await getMonsterSummaries(authInit);
         if (res.status !== 200) throw new Error("取得に失敗しました");
-        ids = (res.data as { ids: string[] }).ids;
+        summaries = res.data.monsters;
         imageMap = monsterImages;
       } else if (type === "weapon") {
-        const res = await getWeaponIds(authInit);
+        const res = await getWeaponSummaries(authInit);
         if (res.status !== 200) throw new Error("取得に失敗しました");
-        ids = (res.data as { ids: string[] }).ids;
+        summaries = res.data.weapons;
         imageMap = weaponImages;
       } else {
-        const res = await getItemIds(authInit);
+        const res = await getItemSummaries(authInit);
         if (res.status !== 200) throw new Error("取得に失敗しました");
-        ids = (res.data as { ids: string[] }).ids;
+        summaries = res.data.items;
         imageMap = itemImages;
       }
 
       setStates((prev) => ({
         ...prev,
-        [type]: { rows: buildRows(ids, imageMap), loading: false, error: null },
+        [type]: { rows: buildRows(summaries, imageMap), loading: false, error: null },
       }));
     } catch {
       setStates((prev) => ({
@@ -167,6 +186,8 @@ export function AssetTable({ adminToken }: { adminToken: string }) {
             <thead>
               <tr className="border-b border-zinc-800">
                 <th className="text-left text-zinc-600 font-normal pb-2 pr-4 w-10">#</th>
+                <th className="text-left text-zinc-600 font-normal pb-2 pr-4">図鑑番号</th>
+                <th className="text-left text-zinc-600 font-normal pb-2 pr-4">名前</th>
                 <th className="text-left text-zinc-600 font-normal pb-2 pr-4">ID</th>
                 <th className="text-left text-zinc-600 font-normal pb-2 pr-4">画像パス</th>
                 <th className="text-left text-zinc-600 font-normal pb-2">備考</th>
@@ -175,13 +196,19 @@ export function AssetTable({ adminToken }: { adminToken: string }) {
             <tbody>
               {rows.map((row) => (
                 <tr
-                  key={row.id}
+                  key={row.indexNumber}
                   className={`border-b border-zinc-900 ${
                     hasIssue(row) ? "bg-amber-950/20" : ""
                   }`}
                 >
                   <td className="py-2 pr-4 text-zinc-600 tabular-nums">{row.index}</td>
-                  <td className="py-2 pr-4 text-zinc-300 font-mono break-all">{row.id}</td>
+                  <td className="py-2 pr-4 text-zinc-300 font-mono">{row.indexNumber}</td>
+                  <td className="py-2 pr-4 text-zinc-300">
+                    {row.name ?? <span className="text-zinc-700">—</span>}
+                  </td>
+                  <td className="py-2 pr-4 text-zinc-500 font-mono break-all">
+                    {row.id ?? <span className="text-zinc-700">—</span>}
+                  </td>
                   <td className="py-2 pr-4 text-zinc-400 font-mono">
                     {row.imageUrl ?? <span className="text-zinc-700">—</span>}
                   </td>

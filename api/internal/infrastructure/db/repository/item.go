@@ -63,8 +63,17 @@ func itemFromRow(id int64, name, indexNumber, effectType string, createdAt, upda
 	return item
 }
 
-func (r *itemRepository) FindAllIDs(ctx context.Context) ([]int64, error) {
-	return r.q.GetAllItemIDs(ctx)
+func (r *itemRepository) FindAllSummaries(ctx context.Context) ([]entity.ItemSummary, error) {
+	rows, err := r.q.GetAllItemSummaries(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// sqlc は 0 件のとき nil を返す。JSON で null にならないよう空スライスで初期化する。
+	out := make([]entity.ItemSummary, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, entity.ItemSummary{ID: row.ID, Name: row.Name, IndexNumber: row.IndexNumber})
+	}
+	return out, nil
 }
 
 func (r *itemRepository) FindByID(ctx context.Context, id int64) (*entity.Item, error) {

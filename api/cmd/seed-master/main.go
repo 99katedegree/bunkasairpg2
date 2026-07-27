@@ -93,15 +93,66 @@ func seed(ctx context.Context, db *sql.DB) error {
 	defer tx.Rollback()
 
 	// モンスターが武器・アイテムを外部キーで参照するので先にこちらを入れる。
-	for _, w := range weapons {
-		var elementAttack any
-		if w.ElementAttack != nil {
-			elementAttack = *w.ElementAttack
+	if err := insertWeapons(ctx, tx); err != nil {
+		return err
+	}
+	if err := insertItems(ctx, tx); err != nil {
+		return err
+	}
+	if err := insertMonsters(ctx, tx); err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+// ============================================================================
+// 一括投入
+//
+// 1 行ずつ INSERT すると 1 行につき 1 往復かかる。リモートの RDS が相手だと
+// 往復 10ms でも 670 行で 7 秒、100ms なら 4 分近くになる。複数行を 1 文に
+// まとめて送ることで往復回数を数回まで落とす。
+//
+// バッチサイズはプレースホルダ数で決める。MySQL のプリペアドステートメントは
+// パラメータ 65535 個が上限なので、1 行あたりの列数から逆算して余裕を持たせる。
+// ============================================================================
+
+// batchSize は 1 文に詰める行数を、1 行あたりの列数から決める。
+func batchSize(columns int) int {
+	const maxParams = 60000
+	n := maxParams / columns
+	if n > 500 {
+		n = 500
+	}
+	if n < 1 {
+		n = 1
+	}
+	return n
+}
+
+// placeholders は "(?, ?, ?), (?, ?, ?)" のような VALUES 部分を組み立てる。
+func placeholders(rows, columns int, tail string) string {
+	one := "(" + strings.Repeat("?, ", columns-1) + "?" + tail + ")"
+	return strings.Repeat(one+", ", rows-1) + one
+}
+
+func insertWeapons(ctx context.Context, tx *sql.Tx) error {
+	const cols = 7
+	size := batchSize(cols)
+	for i := 0; i < len(weapons); i += size {
+		chunk := weapons[i:min(i+size, len(weapons))]
+		args := make([]any, 0, len(chunk)*cols)
+		for _, w := range chunk {
+			var elementAttack any
+			if w.ElementAttack != nil {
+				elementAttack = *w.ElementAttack
+			}
+			args = append(args, w.ID, w.Name, w.IndexNumber, w.PhysicsAttack,
+				elementAttack, w.PhysicsType, w.ElementType)
 		}
-		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO weapons
+		q := `INSERT INTO weapons
 				(id, name, index_number, physics_attack, element_attack, physics_type, element_type, created_at, updated_at)
-			VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+			VALUES ` + placeholders(len(chunk), cols, ", NOW(), NOW()") + `
 			ON DUPLICATE KEY UPDATE
 				name = VALUES(name),
 				index_number = VALUES(index_number),
@@ -109,68 +160,120 @@ func seed(ctx context.Context, db *sql.DB) error {
 				element_attack = VALUES(element_attack),
 				physics_type = VALUES(physics_type),
 				element_type = VALUES(element_type),
-				updated_at = NOW()`,
-			w.ID, w.Name, w.IndexNumber, w.PhysicsAttack, elementAttack, w.PhysicsType, w.ElementType,
-		); err != nil {
-			return fmt.Errorf("weapon %s (id=%d): %w", w.Name, w.ID, err)
+				updated_at = NOW()`
+		if _, err := tx.ExecContext(ctx, q, args...); err != nil {
+			return fmt.Errorf("武器の投入 (%d〜%d 件目): %w", i+1, i+len(chunk), err)
 		}
 	}
+	return nil
+}
 
-	for _, it := range items {
-		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO items (id, name, index_number, effect_type, created_at, updated_at)
-			VALUES (?, ?, ?, ?, NOW(), NOW())
+func insertItems(ctx context.Context, tx *sql.Tx) error {
+	const cols = 4
+	size := batchSize(cols)
+	for i := 0; i < len(items); i += size {
+		chunk := items[i:min(i+size, len(items))]
+		args := make([]any, 0, len(chunk)*cols)
+		for _, it := range chunk {
+			args = append(args, it.ID, it.Name, it.IndexNumber, it.EffectType)
+		}
+		q := `INSERT INTO items (id, name, index_number, effect_type, created_at, updated_at)
+			VALUES ` + placeholders(len(chunk), cols, ", NOW(), NOW()") + `
 			ON DUPLICATE KEY UPDATE
 				name = VALUES(name),
 				index_number = VALUES(index_number),
 				effect_type = VALUES(effect_type),
-				updated_at = NOW()`,
-			it.ID, it.Name, it.IndexNumber, it.EffectType,
-		); err != nil {
-			return fmt.Errorf("item %s (id=%d): %w", it.Name, it.ID, err)
-		}
-
-		// 効果種別を作り替えたときに古い行が残らないよう、毎回 3 テーブルから消してから入れ直す。
-		for _, table := range []string{"heal_items", "buff_items", "debuff_items"} {
-			if _, err := tx.ExecContext(ctx,
-				fmt.Sprintf("DELETE FROM %s WHERE item_id = ?", table), it.ID); err != nil {
-				return fmt.Errorf("item %s の %s 削除: %w", it.Name, table, err)
-			}
-		}
-
-		switch it.EffectType {
-		case EffectHeal:
-			_, err = tx.ExecContext(ctx, `
-				INSERT INTO heal_items (item_id, amount, created_at, updated_at)
-				VALUES (?, ?, NOW(), NOW())`, it.ID, it.Amount)
-		case EffectBuff:
-			_, err = tx.ExecContext(ctx, `
-				INSERT INTO buff_items (item_id, rate, target, created_at, updated_at)
-				VALUES (?, ?, ?, NOW(), NOW())`, it.ID, it.Rate, it.Target)
-		case EffectDebuff:
-			_, err = tx.ExecContext(ctx, `
-				INSERT INTO debuff_items (item_id, rate, target, created_at, updated_at)
-				VALUES (?, ?, ?, NOW(), NOW())`, it.ID, it.Rate, it.Target)
-		}
-		if err != nil {
-			return fmt.Errorf("item %s の効果行: %w", it.Name, err)
+				updated_at = NOW()`
+		if _, err := tx.ExecContext(ctx, q, args...); err != nil {
+			return fmt.Errorf("アイテムの投入 (%d〜%d 件目): %w", i+1, i+len(chunk), err)
 		}
 	}
 
-	for _, m := range monsters {
-		var weaponID, itemID any
-		if m.DropWeaponID != nil {
-			weaponID = *m.DropWeaponID
+	// 効果種別を作り替えたときに古い行が残らないよう、3 テーブルとも一度空にしてから入れ直す。
+	// 投入するアイテム ID の集合で消すので、seed が管理していない行には触れない。
+	ids := make([]any, 0, len(items))
+	for _, it := range items {
+		ids = append(ids, it.ID)
+	}
+	if len(ids) > 0 {
+		in := "(" + strings.Repeat("?, ", len(ids)-1) + "?)"
+		for _, table := range []string{"heal_items", "buff_items", "debuff_items"} {
+			if _, err := tx.ExecContext(ctx,
+				"DELETE FROM "+table+" WHERE item_id IN "+in, ids...); err != nil {
+				return fmt.Errorf("%s の削除: %w", table, err)
+			}
 		}
-		if m.DropItemID != nil {
-			itemID = *m.DropItemID
+	}
+
+	// 効果種別ごとに分けて、それぞれ 1 文で入れる。
+	var heal, buff, debuff []ItemSeed
+	for _, it := range items {
+		switch it.EffectType {
+		case EffectHeal:
+			heal = append(heal, it)
+		case EffectBuff:
+			buff = append(buff, it)
+		case EffectDebuff:
+			debuff = append(debuff, it)
 		}
-		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO monsters
+	}
+
+	if len(heal) > 0 {
+		args := make([]any, 0, len(heal)*2)
+		for _, it := range heal {
+			args = append(args, it.ID, it.Amount)
+		}
+		q := `INSERT INTO heal_items (item_id, amount, created_at, updated_at) VALUES ` +
+			placeholders(len(heal), 2, ", NOW(), NOW()")
+		if _, err := tx.ExecContext(ctx, q, args...); err != nil {
+			return fmt.Errorf("回復アイテムの効果行: %w", err)
+		}
+	}
+	for _, x := range []struct {
+		table string
+		rows  []ItemSeed
+	}{{"buff_items", buff}, {"debuff_items", debuff}} {
+		if len(x.rows) == 0 {
+			continue
+		}
+		args := make([]any, 0, len(x.rows)*3)
+		for _, it := range x.rows {
+			args = append(args, it.ID, it.Rate, it.Target)
+		}
+		q := `INSERT INTO ` + x.table + ` (item_id, rate, target, created_at, updated_at) VALUES ` +
+			placeholders(len(x.rows), 3, ", NOW(), NOW()")
+		if _, err := tx.ExecContext(ctx, q, args...); err != nil {
+			return fmt.Errorf("%s の効果行: %w", x.table, err)
+		}
+	}
+	return nil
+}
+
+func insertMonsters(ctx context.Context, tx *sql.Tx) error {
+	const cols = 18
+	size := batchSize(cols)
+	for i := 0; i < len(monsters); i += size {
+		chunk := monsters[i:min(i+size, len(monsters))]
+		args := make([]any, 0, len(chunk)*cols)
+		for _, m := range chunk {
+			var weaponID, itemID any
+			if m.DropWeaponID != nil {
+				weaponID = *m.DropWeaponID
+			}
+			if m.DropItemID != nil {
+				itemID = *m.DropItemID
+			}
+			args = append(args,
+				m.ID, weaponID, itemID, m.IndexNumber, m.Name, m.Attack, m.HitPoint,
+				m.ExperiencePoint, m.RecommendedLevel,
+				m.Res.Slash, m.Res.Blow, m.Res.Shoot,
+				m.Res.Neutral, m.Res.Flame, m.Res.Water, m.Res.Wood, m.Res.Shine, m.Res.Dark)
+		}
+		q := `INSERT INTO monsters
 				(id, weapon_id, item_id, index_number, name, attack, hit_point, experience_point,
 				 recommended_level, slash, blow, shoot, neutral, flame, water, wood, shine, dark,
 				 created_at, updated_at)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+			VALUES ` + placeholders(len(chunk), cols, ", NOW(), NOW()") + `
 			ON DUPLICATE KEY UPDATE
 				weapon_id = VALUES(weapon_id),
 				item_id = VALUES(item_id),
@@ -183,17 +286,12 @@ func seed(ctx context.Context, db *sql.DB) error {
 				slash = VALUES(slash), blow = VALUES(blow), shoot = VALUES(shoot),
 				neutral = VALUES(neutral), flame = VALUES(flame), water = VALUES(water),
 				wood = VALUES(wood), shine = VALUES(shine), dark = VALUES(dark),
-				updated_at = NOW()`,
-			m.ID, weaponID, itemID, m.IndexNumber, m.Name, m.Attack, m.HitPoint, m.ExperiencePoint,
-			m.RecommendedLevel,
-			m.Res.Slash, m.Res.Blow, m.Res.Shoot,
-			m.Res.Neutral, m.Res.Flame, m.Res.Water, m.Res.Wood, m.Res.Shine, m.Res.Dark,
-		); err != nil {
-			return fmt.Errorf("monster %s (%s): %w", m.Name, m.IndexNumber, err)
+				updated_at = NOW()`
+		if _, err := tx.ExecContext(ctx, q, args...); err != nil {
+			return fmt.Errorf("モンスターの投入 (%d〜%d 件目): %w", i+1, i+len(chunk), err)
 		}
 	}
-
-	return tx.Commit()
+	return nil
 }
 
 // ============================================================================

@@ -146,6 +146,23 @@ func (r *monsterRepository) FindAllIDs(ctx context.Context) ([]uuid.UUID, error)
 	return ids, nil
 }
 
+func (r *monsterRepository) FindAllSummaries(ctx context.Context) ([]entity.MonsterSummary, error) {
+	rows, err := r.q.GetAllMonsterSummaries(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// sqlc は 0 件のとき nil を返す。JSON で null にならないよう空スライスで初期化する。
+	out := make([]entity.MonsterSummary, 0, len(rows))
+	for _, row := range rows {
+		id, err := uuid.Parse(row.ID)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, entity.MonsterSummary{ID: id, Name: row.Name, IndexNumber: row.IndexNumber})
+	}
+	return out, nil
+}
+
 func (r *monsterRepository) FindCatalogByUserID(ctx context.Context, userID uuid.UUID, offset, limit int) ([]*entity.MonsterCatalogEntry, int64, error) {
 	total, err := r.q.CountMonsterCatalogByUserID(ctx, userID.String())
 	if err != nil {

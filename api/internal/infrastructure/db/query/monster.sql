@@ -33,4 +33,9 @@ VALUES (?, ?, NOW(), NOW());
 SELECT COUNT(*) FROM monster_entries WHERE user_id = ? AND monster_id = ?;
 
 -- name: GetAllMonsterIDs :many
+-- バトルトークン生成用。QR に埋める UUID が要る。
 SELECT id FROM monsters ORDER BY index_number;
+
+-- name: GetAllMonsterSummaries :many
+-- 管理画面の一覧用。図鑑番号は 4 桁ゼロ埋めなので文字列順がそのまま番号順。
+SELECT id, name, index_number FROM monsters ORDER BY index_number;

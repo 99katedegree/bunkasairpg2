@@ -18,8 +18,8 @@ func NewWeaponUsecase(weaponRepo repository.WeaponRepository, userRepo repositor
 	return &WeaponUsecase{weaponRepo: weaponRepo, userRepo: userRepo}
 }
 
-func (u *WeaponUsecase) GetAllIDs(ctx context.Context) ([]int64, error) {
-	return u.weaponRepo.FindAllIDs(ctx)
+func (u *WeaponUsecase) GetAllSummaries(ctx context.Context) ([]entity.WeaponSummary, error) {
+	return u.weaponRepo.FindAllSummaries(ctx)
 }
 
 func (u *WeaponUsecase) GetUserWeapons(ctx context.Context, userID uuid.UUID) ([]*entity.Weapon, error) {

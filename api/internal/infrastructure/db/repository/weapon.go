@@ -39,8 +39,17 @@ func weaponFromDB(w dbgen.Weapon) *entity.Weapon {
 	return e
 }
 
-func (r *weaponRepository) FindAllIDs(ctx context.Context) ([]int64, error) {
-	return r.q.GetAllWeaponIDs(ctx)
+func (r *weaponRepository) FindAllSummaries(ctx context.Context) ([]entity.WeaponSummary, error) {
+	rows, err := r.q.GetAllWeaponSummaries(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// sqlc は 0 件のとき nil を返す。JSON で null にならないよう空スライスで初期化する。
+	out := make([]entity.WeaponSummary, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, entity.WeaponSummary{ID: row.ID, Name: row.Name, IndexNumber: row.IndexNumber})
+	}
+	return out, nil
 }
 
 func (r *weaponRepository) FindByID(ctx context.Context, id int64) (*entity.Weapon, error) {

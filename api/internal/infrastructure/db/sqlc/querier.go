@@ -21,12 +21,15 @@ type Querier interface {
 	DeleteInactiveUsers(ctx context.Context) error
 	DeleteUserItemIfZero(ctx context.Context, arg DeleteUserItemIfZeroParams) error
 	FindAdminByEmail(ctx context.Context, email string) (Admin, error)
-	// 図鑑番号は 4 桁ゼロ埋めの数字なので、文字列順でそのまま番号順になる。
-	GetAllItemIDs(ctx context.Context) ([]int64, error)
+	// 管理画面の一覧用。図鑑番号は 4 桁ゼロ埋めなので文字列順がそのまま番号順。
+	GetAllItemSummaries(ctx context.Context) ([]GetAllItemSummariesRow, error)
+	// バトルトークン生成用。QR に埋める UUID が要る。
 	GetAllMonsterIDs(ctx context.Context) ([]string, error)
+	// 管理画面の一覧用。図鑑番号は 4 桁ゼロ埋めなので文字列順がそのまま番号順。
+	GetAllMonsterSummaries(ctx context.Context) ([]GetAllMonsterSummariesRow, error)
 	GetAllUserIDs(ctx context.Context) ([]string, error)
-	// 図鑑番号は 4 桁ゼロ埋めの数字なので、文字列順でそのまま番号順になる。
-	GetAllWeaponIDs(ctx context.Context) ([]int64, error)
+	// 管理画面の一覧用。図鑑番号は 4 桁ゼロ埋めなので文字列順がそのまま番号順。
+	GetAllWeaponSummaries(ctx context.Context) ([]GetAllWeaponSummariesRow, error)
 	GetBattleByID(ctx context.Context, id string) (Battle, error)
 	GetItemByID(ctx context.Context, id int64) (GetItemByIDRow, error)
 	GetItemIndexByUserID(ctx context.Context, arg GetItemIndexByUserIDParams) ([]GetItemIndexByUserIDRow, error)

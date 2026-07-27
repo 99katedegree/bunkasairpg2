@@ -57,6 +57,36 @@ export interface AuthResponse {
   authToken: string;
 }
 
+/**
+ * 管理画面向けのモンスターの要約。画像は含まない（フロントの関心のため）。
+ */
+export interface MonsterSummaryResponse {
+  id: string;
+  name: string;
+  /** 図鑑番号（4 桁の数字） */
+  indexNumber: string;
+}
+
+/**
+ * 管理画面向けの武器の要約。画像は含まない（フロントの関心のため）。
+ */
+export interface WeaponSummaryResponse {
+  id: number;
+  name: string;
+  /** 図鑑番号（4 桁の数字） */
+  indexNumber: string;
+}
+
+/**
+ * 管理画面向けのアイテムの要約。画像は含まない（フロントの関心のため）。
+ */
+export interface ItemSummaryResponse {
+  id: number;
+  name: string;
+  /** 図鑑番号（4 桁の数字） */
+  indexNumber: string;
+}
+
 export interface WeaponResponse {
   id: number;
   name: string;
@@ -301,16 +331,16 @@ export type GetMeItemIndex200 = {
   total: number;
 };
 
-export type GetMonsterIds200 = {
-  ids: string[];
+export type GetMonsterSummaries200 = {
+  monsters: MonsterSummaryResponse[];
 };
 
-export type GetWeaponIds200 = {
-  ids: string[];
+export type GetWeaponSummaries200 = {
+  weapons: WeaponSummaryResponse[];
 };
 
-export type GetItemIds200 = {
-  ids: string[];
+export type GetItemSummaries200 = {
+  items: ItemSummaryResponse[];
 };
 
 export type GetMonsterBattleTokens200 = {

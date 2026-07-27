@@ -14,7 +14,7 @@ import type {
 import type {
   GetMeWeaponIndex200,
   GetMeWeaponIndexParams,
-  GetWeaponIds200,
+  GetWeaponSummaries200,
   GetWeapons200,
   UnauthorizedResponse
 } from '../bunkasaiRPGAPI.schemas';
@@ -179,39 +179,42 @@ export const useGetMeWeaponIndex = <TError = Promise<UnauthorizedResponse>>(
     ...query
   }
 }
-export type getWeaponIdsResponse200 = {
-  data: GetWeaponIds200
+export type getWeaponSummariesResponse200 = {
+  data: GetWeaponSummaries200
   status: 200
 }
 
-export type getWeaponIdsResponse401 = {
+export type getWeaponSummariesResponse401 = {
   data: UnauthorizedResponse
   status: 401
 }
 
-export type getWeaponIdsResponseSuccess = (getWeaponIdsResponse200) & {
+export type getWeaponSummariesResponseSuccess = (getWeaponSummariesResponse200) & {
   headers: Headers;
 };
-export type getWeaponIdsResponseError = (getWeaponIdsResponse401) & {
+export type getWeaponSummariesResponseError = (getWeaponSummariesResponse401) & {
   headers: Headers;
 };
 
-export type getWeaponIdsResponse = (getWeaponIdsResponseSuccess | getWeaponIdsResponseError)
+export type getWeaponSummariesResponse = (getWeaponSummariesResponseSuccess | getWeaponSummariesResponseError)
 
-export const getGetWeaponIdsUrl = () => {
-
-
+export const getGetWeaponSummariesUrl = () => {
 
 
-  return `http://localhost:8085/weapons/ids`
+
+
+  return `http://localhost:8085/weapons/summaries`
 }
 
 /**
- * @summary [管理者専用] 全武器ID一覧取得
+ * マスタに登録されている全武器を図鑑番号の昇順で返す。管理画面が
+ * 「何が存在するか」を把握するために使う。どの画像を割り当てるかは
+ * フロント側の関心なので、ここでは画像情報は一切返さない。
+ * @summary [管理者専用] 全武器の一覧取得
  */
-export const getWeaponIds = async ( options?: RequestInit): Promise<getWeaponIdsResponse> => {
+export const getWeaponSummaries = async ( options?: RequestInit): Promise<getWeaponSummariesResponse> => {
 
-  const res = await fetch(getGetWeaponIdsUrl(),
+  const res = await fetch(getGetWeaponSummariesUrl(),
   {
     ...options,
     method: 'GET'
@@ -223,28 +226,28 @@ export const getWeaponIds = async ( options?: RequestInit): Promise<getWeaponIds
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: getWeaponIdsResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as getWeaponIdsResponse
+  const data: getWeaponSummariesResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getWeaponSummariesResponse
 }
 
 
 
 
-export const getGetWeaponIdsKey = () => [`http://localhost:8085/weapons/ids`] as const;
+export const getGetWeaponSummariesKey = () => [`http://localhost:8085/weapons/summaries`] as const;
 
-export type GetWeaponIdsQueryResult = NonNullable<Awaited<ReturnType<typeof getWeaponIds>>>
+export type GetWeaponSummariesQueryResult = NonNullable<Awaited<ReturnType<typeof getWeaponSummaries>>>
 
 /**
- * @summary [管理者専用] 全武器ID一覧取得
+ * @summary [管理者専用] 全武器の一覧取得
  */
-export const useGetWeaponIds = <TError = Promise<UnauthorizedResponse>>(
-   options?: { swr?:SWRConfiguration<Awaited<ReturnType<typeof getWeaponIds>>, TError> & { swrKey?: Key, enabled?: boolean }, fetch?: RequestInit }
+export const useGetWeaponSummaries = <TError = Promise<UnauthorizedResponse>>(
+   options?: { swr?:SWRConfiguration<Awaited<ReturnType<typeof getWeaponSummaries>>, TError> & { swrKey?: Key, enabled?: boolean }, fetch?: RequestInit }
 ) => {
   const {swr: swrOptions, fetch: fetchOptions} = options ?? {}
 
   const isEnabled = swrOptions?.enabled !== false
-  const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetWeaponIdsKey() : null);
-  const swrFn = () => getWeaponIds(fetchOptions)
+  const swrKey = swrOptions?.swrKey ?? (() => isEnabled ? getGetWeaponSummariesKey() : null);
+  const swrFn = () => getWeaponSummaries(fetchOptions)
 
   const query = useSwr<Awaited<ReturnType<typeof swrFn>>, TError>(swrKey, swrFn, swrOptions)
 

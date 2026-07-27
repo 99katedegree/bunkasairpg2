@@ -17,8 +17,8 @@ func NewItemUsecase(itemRepo repository.ItemRepository) *ItemUsecase {
 	return &ItemUsecase{itemRepo: itemRepo}
 }
 
-func (u *ItemUsecase) GetAllIDs(ctx context.Context) ([]int64, error) {
-	return u.itemRepo.FindAllIDs(ctx)
+func (u *ItemUsecase) GetAllSummaries(ctx context.Context) ([]entity.ItemSummary, error) {
+	return u.itemRepo.FindAllSummaries(ctx)
 }
 
 func (u *ItemUsecase) GetUserItems(ctx context.Context, userID uuid.UUID) ([]*entity.UserItem, error) {
