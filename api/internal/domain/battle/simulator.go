@@ -181,8 +181,16 @@ func calcPlayerDamage(rng *RNG, us UserState, ms MonsterState, buffs, debuffs ma
 		ea = *us.Weapon.ElementAttack
 	}
 
-	physics := us.Weapon.PhysicsAttack * (1 + buffs[pt]) * (1 - resistance(ms, pt)*(1-debuffs[pt]))
-	element := ea * (1 + buffs[et]) * (1 - resistance(ms, et)*(1-debuffs[et]))
+	// デバフは耐性倍率への加算。以前は (1 - 耐性*(1-デバフ)) と乗算していたが、
+	// あれは耐性を符号ごと 0 に近づける式なので、弱点(耐性が負)にかけると
+	// ダメージが下がり、デバフが 1 を超えると耐性と弱点が入れ替わっていた。
+	// 等倍(耐性 0)の相手には何の効果もなかった。加算なら常に単調増加する。
+	physics := us.Weapon.PhysicsAttack * (1 + buffs[pt]) * (1 - resistance(ms, pt) + debuffs[pt])
+	element := ea * (1 + buffs[et]) * (1 - resistance(ms, et) + debuffs[et])
+
+	// 物理と属性は加算ではなく乗算。属性を攻撃全体にかかる係数として効かせるための
+	// 構造で、加算にすると炎吸収の相手に炎属性武器で殴ったとき属性分だけ吸収されて
+	// 物理分はダメージが通ってしまう。攻撃全体が吸収される方が納得感があるためこの形。
 	base := physics * element
 
 	lf := 0.8 + math.Sqrt(float64(us.Level))/5.0

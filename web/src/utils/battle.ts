@@ -111,21 +111,25 @@ export class Battle {
     const elementType = this.user.weapon.elementType;
     const monsterPhysics = this.monster[physicsType] ?? 1.0;
     const monsterElement = this.monster[elementType] ?? 1.0;
+    // デバフは耐性倍率への加算。サーバー側 calcPlayerDamage と必ず同じ式にすること。
     const physics =
       this.user.weapon.physicsAttack *
       (1 + this.buffs[physicsType]) *
-      (1 - monsterPhysics * (1 - this.debuffs[physicsType]));
+      (1 - monsterPhysics + this.debuffs[physicsType]);
     const element =
       (this.user.weapon.elementAttack || 1) *
       (1 + this.buffs[elementType]) *
-      (1 - monsterElement * (1 - this.debuffs[elementType]));
+      (1 - monsterElement + this.debuffs[elementType]);
+    // 物理と属性は加算ではなく乗算。属性を攻撃全体にかかる係数として効かせるための
+    // 構造で、加算にすると炎吸収の相手に炎属性武器で殴ったとき属性分だけ吸収されて
+    // 物理分はダメージが通ってしまう。攻撃全体が吸収される方が納得感があるためこの形。
     const baseDamage = physics * element;
     const levelFactor = 0.8 + Math.sqrt(this.user.level) / 5;
     const random = 0.95 + this.rng() * 0.1;
 
     // √|
-    //   (武器物理攻撃力 * (1 + 物理バフ) * (1 - モンスター物理耐性 * (1 - 物理デバフ))
-    //    * 武器属性攻撃力 * (1 + 属性バフ) * (1 - モンスター属性耐性 * (1 - 属性デバフ))) |
+    //   (武器物理攻撃力 * (1 + 物理バフ) * (1 - モンスター物理耐性 + 物理デバフ)
+    //    * 武器属性攻撃力 * (1 + 属性バフ) * (1 - モンスター属性耐性 + 属性デバフ)) |
     //   * レベル補正(0.8 + √(ユーザーLv)/5)
     //   * 乱数補正(0.95〜1.05)
     //   * 符号(元の基本ダメージが負なら -1、正なら 1)
