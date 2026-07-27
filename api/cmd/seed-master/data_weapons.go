@@ -17,6 +17,20 @@ package main
 // ただし最終ティア T12 だけは 3 攻撃種別 × 6 属性の 18 通りを全て揃えてあり、
 // そこで歯抜けが解消する。モンスター側のギミックは「その時点で存在する
 // 組み合わせ」からしか作らないこと（validate の組み合わせ検証が守っている）。
+//
+// --- 名前について -----------------------------------------------------------
+//
+// 武器名は手で付けるものではなく、その武器を落とす魔物から決まる。
+// 数値や属性を変えるのは自由だが、名前を直接書き換えても次の生成で戻る。
+// 名前を変えたければ落とし主のほう（data_names.go）を直すこと。
+//
+//	原型 モスピル が落とす剣           → モスソード
+//	亜種 モスピルルクス が落とす槌      → ルクスモスハンマー
+//	亜種 スブモスピルウンブラ が落とす槌 → スブウンブラモスハンマー
+//
+// 原型の前部（モス）を全ての亜種が引き継ぐので、同じ系統から得た武器だと
+// 一目で分かる。加えて属性の語根（ルクス = 光、ウンブラ = 闇）と歪みの
+// 深さを表す接頭辞（スブ）が付き、どんな個体から取ったものかも読める。
 // ============================================================================
 
 // bareHands は DB に保存しない初期装備。
@@ -30,7 +44,7 @@ var bareHands = WeaponSeed{
 
 var weapons = []WeaponSeed{
 
-	// --- T1 陽だまりの草原 (Lv1-4) 積 3,600 ---
+	// --- T1 陽だまりの草原 (Lv1) 積 3,600 ---
 	{ID: 1, IndexNumber: "0001", Name: "モスソード", Category: "剣", PhysicsAttack: 105, ElementAttack: ea(35), PhysicsType: Slash, ElementType: Neutral},
 	{ID: 2, IndexNumber: "0002", Name: "ロスハンマー", Category: "ハンマー", PhysicsAttack: 170, ElementAttack: ea(21), PhysicsType: Blow, ElementType: Neutral},
 	{ID: 3, IndexNumber: "0003", Name: "フロボウ", Category: "弓", PhysicsAttack: 66, ElementAttack: ea(55), PhysicsType: Shoot, ElementType: Wood},

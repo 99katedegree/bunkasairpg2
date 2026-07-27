@@ -3,14 +3,26 @@
 //	go run ./cmd/seed-master              # 検証 → 投入
 //	go run ./cmd/seed-master -dry-run     # DB に触らず検証とバランス表だけ出す
 //	go run ./cmd/seed-master -report      # 投入したうえでバランス表も出す
+//	go run ./cmd/seed-master -reset       # マスタを空にしてから投入する
 //
 // 素手は DB に入れない。装備なしのとき handler/me.go がハードコード値を返す仕様なので、
 // このコマンドは data_weapons.go の bareHands をバランス計算の出発点にするだけ。
 //
 // 投入は ID 固定の upsert なので何度実行しても安全。既存の図鑑登録・所持品・
-// バトル履歴は壊さず、数値の調整だけを上書きできる。
+// バトル履歴は壊さず、数値の調整だけを上書きできる。図鑑番号を振り直したときだけは
+// ユニーク制約で衝突するので -reset が要る（詳しくは resetMaster を参照）。
 //
-// 実データは data_weapons.go / data_items.go / data_monsters.go にある。
+// --- ファイルの役割 ---------------------------------------------------------
+//
+//	story.go         世界設定と、名前の付け方の指標。まずここを読む
+//	data.go          型の定義と、耐性値の目盛り。数値の意味だけを置く
+//	data_names.go    魔物 500 体の名前・属性・由来。名前を変えるならここ
+//	data_monsters.go 魔物の数値とギミック
+//	data_weapons.go  武器 126 本。名前は落とし主から決まるので直接書かない
+//	data_items.go    アイテム 44 個。名前は同上
+//
+// 武器とアイテムの Name を手で書き換えても、次にデータを作り直すと落とし主から
+// 付け直される。名前を変えたいときは data_names.go のほうを直すこと。
 package main
 
 import (
