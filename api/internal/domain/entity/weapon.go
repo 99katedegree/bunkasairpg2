@@ -10,6 +10,7 @@ type Weapon struct {
 	ElementAttack *float64
 	PhysicsType   string // slash | blow | shoot
 	ElementType   string // neutral | flame | water | wood | shine | dark
+	ImageURL      *string
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }

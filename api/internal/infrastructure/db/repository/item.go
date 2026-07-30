@@ -34,7 +34,7 @@ func parseDecimalString(s sql.NullString) *float64 {
 	return &v
 }
 
-func itemFromRow(id int64, name, indexNumber, effectType string, createdAt, updatedAt interface{},
+func itemFromRow(id int64, name, indexNumber, effectType string, imageURL sql.NullString, createdAt, updatedAt interface{},
 	amount sql.NullInt32, buffRate, buffTarget, debuffRate, debuffTarget sql.NullString,
 ) *entity.Item {
 	item := &entity.Item{
@@ -42,6 +42,7 @@ func itemFromRow(id int64, name, indexNumber, effectType string, createdAt, upda
 		Name:        name,
 		IndexNumber: indexNumber,
 		EffectType:  effectType,
+		ImageURL:    nullStringPtr(imageURL),
 	}
 
 	if amount.Valid {
@@ -71,7 +72,10 @@ func (r *itemRepository) FindAllSummaries(ctx context.Context) ([]entity.ItemSum
 	// sqlc は 0 件のとき nil を返す。JSON で null にならないよう空スライスで初期化する。
 	out := make([]entity.ItemSummary, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, entity.ItemSummary{ID: row.ID, Name: row.Name, IndexNumber: row.IndexNumber})
+		out = append(out, entity.ItemSummary{
+			ID: row.ID, Name: row.Name, IndexNumber: row.IndexNumber,
+			ImageURL: nullStringPtr(row.ImageUrl),
+		})
 	}
 	return out, nil
 }
@@ -86,7 +90,7 @@ func (r *itemRepository) FindByID(ctx context.Context, id int64) (*entity.Item, 
 	}
 
 	item := itemFromRow(
-		row.ID, row.Name, row.IndexNumber, row.EffectType, row.CreatedAt, row.UpdatedAt,
+		row.ID, row.Name, row.IndexNumber, row.EffectType, row.ImageUrl, row.CreatedAt, row.UpdatedAt,
 		row.Amount, row.BuffRate, row.BuffTarget, row.DebuffRate, row.DebuffTarget,
 	)
 	item.CreatedAt = row.CreatedAt
@@ -103,7 +107,7 @@ func (r *itemRepository) FindByUserID(ctx context.Context, userID uuid.UUID) ([]
 	result := make([]*entity.UserItem, 0, len(rows))
 	for _, row := range rows {
 		item := itemFromRow(
-			row.ID, row.Name, row.IndexNumber, row.EffectType, row.CreatedAt, row.UpdatedAt,
+			row.ID, row.Name, row.IndexNumber, row.EffectType, row.ImageUrl, row.CreatedAt, row.UpdatedAt,
 			row.Amount, row.BuffRate, row.BuffTarget, row.DebuffRate, row.DebuffTarget,
 		)
 		item.CreatedAt = row.CreatedAt
@@ -134,7 +138,7 @@ func (r *itemRepository) FindIndexByUserID(ctx context.Context, userID uuid.UUID
 	result := make([]*entity.Item, 0, len(rows))
 	for _, row := range rows {
 		item := itemFromRow(
-			row.ID, row.Name, row.IndexNumber, row.EffectType, row.CreatedAt, row.UpdatedAt,
+			row.ID, row.Name, row.IndexNumber, row.EffectType, row.ImageUrl, row.CreatedAt, row.UpdatedAt,
 			row.Amount, row.BuffRate, row.BuffTarget, row.DebuffRate, row.DebuffTarget,
 		)
 		item.CreatedAt = row.CreatedAt

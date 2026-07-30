@@ -1,11 +1,11 @@
 -- name: GetMonsterByID :one
 SELECT m.id, m.weapon_id, m.item_id, m.index_number, m.name, m.attack, m.hit_point, m.experience_point,
-    m.recommended_level, m.slash, m.blow, m.shoot, m.neutral, m.flame, m.water, m.wood, m.shine, m.dark,
+    m.recommended_level, m.image_url, m.slash, m.blow, m.shoot, m.neutral, m.flame, m.water, m.wood, m.shine, m.dark,
     m.created_at, m.updated_at,
     w.id as weapon_id_j, w.name as weapon_name, w.index_number as weapon_index_number,
-    w.physics_attack, w.element_attack, w.physics_type, w.element_type,
+    w.physics_attack, w.element_attack, w.physics_type, w.element_type, w.image_url as weapon_image_url,
     w.created_at as weapon_created_at, w.updated_at as weapon_updated_at,
-    i.id as item_id_j, i.name as item_name, i.index_number as item_index_number, i.effect_type,
+    i.id as item_id_j, i.name as item_name, i.index_number as item_index_number, i.effect_type, i.image_url as item_image_url,
     i.created_at as item_created_at, i.updated_at as item_updated_at,
     hi.amount, bi.rate as buff_rate, bi.target as buff_target, di.rate as debuff_rate, di.target as debuff_target
 FROM monsters m
@@ -38,4 +38,4 @@ SELECT id FROM monsters ORDER BY index_number;
 
 -- name: GetAllMonsterSummaries :many
 -- 管理画面の一覧用。図鑑番号は 4 桁ゼロ埋めなので文字列順がそのまま番号順。
-SELECT id, name, index_number FROM monsters ORDER BY index_number;
+SELECT id, name, index_number, image_url FROM monsters ORDER BY index_number;

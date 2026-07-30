@@ -5,15 +5,19 @@ import { AlertTriangle, CheckCircle2, Loader2, RefreshCw } from "lucide-react";
 import { getMonsterSummaries } from "@/lib/monster/monster";
 import { getWeaponSummaries } from "@/lib/weapon/weapon";
 import { getItemSummaries } from "@/lib/item/item";
-import { monsterImages } from "@/constants/monster-images";
-import { weaponImages } from "@/constants/weapon-images";
-import { itemImages } from "@/constants/item-images";
+import { CachedImage } from "@/components/shared/cached-image";
 
 type AssetType = "monster" | "weapon" | "item";
 
-// バックエンドが返すのは「マスタに何が存在するか」だけ。
-// どの画像を当てるかはフロントの関心なので constants/*-images.ts が持つ。
-type Summary = { id: string | number; name: string; indexNumber: string };
+// バックエンドがマスタの存在と画像URL（/assets/... 配信ルート）の両方を返す。
+// 画像をどのファイルに割り当てるかは cmd/seed-master が図鑑番号から機械的に
+// 決めるので、フロント側で対応表を持つ必要はない。
+type Summary = {
+  id: string | number;
+  name: string;
+  indexNumber: string;
+  imageUrl?: string | null;
+};
 
 type AssetRow = {
   index: number;
@@ -24,33 +28,17 @@ type AssetRow = {
   notes: string[];
 };
 
-// buildRows は「マスタにあるもの」と「画像マップのキー」を図鑑番号で突き合わせる。
-//
-// summaries は API が配列を返さなかった場合に undefined になりうる。
-// 管理画面が真っ白になるより、画像マップ側だけでも一覧できるほうがよい。
-function buildRows(
-  summaries: Summary[] | undefined,
-  imageMap: Record<string, string>
-): AssetRow[] {
+function buildRows(summaries: Summary[] | undefined): AssetRow[] {
   const rows = summaries ?? [];
-  const byNumber = new Map(rows.map((r) => [r.indexNumber, r]));
-
-  const all = [
-    ...new Set([...byNumber.keys(), ...Object.keys(imageMap)]),
-  ].sort();
-
-  return all.map((indexNumber, i) => {
-    const master = byNumber.get(indexNumber);
-    const imageUrl = imageMap[indexNumber] ?? null;
+  return rows.map((r, i) => {
     const notes: string[] = [];
-    if (!master) notes.push("DB に該当する図鑑番号がありません");
-    if (imageUrl === null) notes.push("画像パスが未設定です");
+    if (!r.imageUrl) notes.push("画像がまだ用意されていません");
     return {
       index: i + 1,
-      id: master?.id ?? null,
-      name: master?.name ?? null,
-      indexNumber,
-      imageUrl,
+      id: r.id,
+      name: r.name,
+      indexNumber: r.indexNumber,
+      imageUrl: r.imageUrl ?? null,
       notes,
     };
   });
@@ -85,28 +73,24 @@ export function AssetTable({ adminToken }: { adminToken: string }) {
 
     try {
       let summaries: Summary[] = [];
-      let imageMap: Record<string, string>;
 
       if (type === "monster") {
         const res = await getMonsterSummaries(authInit);
         if (res.status !== 200) throw new Error("取得に失敗しました");
         summaries = res.data.monsters;
-        imageMap = monsterImages;
       } else if (type === "weapon") {
         const res = await getWeaponSummaries(authInit);
         if (res.status !== 200) throw new Error("取得に失敗しました");
         summaries = res.data.weapons;
-        imageMap = weaponImages;
       } else {
         const res = await getItemSummaries(authInit);
         if (res.status !== 200) throw new Error("取得に失敗しました");
         summaries = res.data.items;
-        imageMap = itemImages;
       }
 
       setStates((prev) => ({
         ...prev,
-        [type]: { rows: buildRows(summaries, imageMap), loading: false, error: null },
+        [type]: { rows: buildRows(summaries), loading: false, error: null },
       }));
     } catch {
       setStates((prev) => ({
@@ -189,7 +173,7 @@ export function AssetTable({ adminToken }: { adminToken: string }) {
                 <th className="text-left text-zinc-600 font-normal pb-2 pr-4">図鑑番号</th>
                 <th className="text-left text-zinc-600 font-normal pb-2 pr-4">名前</th>
                 <th className="text-left text-zinc-600 font-normal pb-2 pr-4">ID</th>
-                <th className="text-left text-zinc-600 font-normal pb-2 pr-4">画像パス</th>
+                <th className="text-left text-zinc-600 font-normal pb-2 pr-4">画像</th>
                 <th className="text-left text-zinc-600 font-normal pb-2">備考</th>
               </tr>
             </thead>
@@ -209,8 +193,13 @@ export function AssetTable({ adminToken }: { adminToken: string }) {
                   <td className="py-2 pr-4 text-zinc-500 font-mono break-all">
                     {row.id ?? <span className="text-zinc-700">—</span>}
                   </td>
-                  <td className="py-2 pr-4 text-zinc-400 font-mono">
-                    {row.imageUrl ?? <span className="text-zinc-700">—</span>}
+                  <td className="py-2 pr-4">
+                    <CachedImage
+                      src={row.imageUrl}
+                      alt={row.name ?? row.indexNumber}
+                      className="h-10 w-10 rounded object-cover bg-zinc-800"
+                      fallback={<span className="text-zinc-700">—</span>}
+                    />
                   </td>
                   <td className="py-2">
                     {row.notes.length === 0 ? (

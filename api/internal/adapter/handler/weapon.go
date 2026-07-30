@@ -19,7 +19,7 @@ func (s *Server) GetWeaponSummaries(ctx context.Context, req genapi.GetWeaponSum
 	}
 	out := make([]genapi.WeaponSummaryResponse, 0, len(rows))
 	for _, r := range rows {
-		out = append(out, genapi.WeaponSummaryResponse{Id: int(r.ID), Name: r.Name, IndexNumber: r.IndexNumber})
+		out = append(out, genapi.WeaponSummaryResponse{Id: int(r.ID), Name: r.Name, IndexNumber: r.IndexNumber, ImageUrl: r.ImageURL})
 	}
 	return genapi.GetWeaponSummaries200JSONResponse{Weapons: out}, nil
 }
@@ -53,6 +53,7 @@ func (s *Server) GetWeapons(ctx context.Context, req genapi.GetWeaponsRequestObj
 			ElementAttack: &ea,
 			PhysicsType:   genapi.PhysicsType(w.PhysicsType),
 			ElementType:   genapi.ElementType(w.ElementType),
+			ImageUrl:      w.ImageURL,
 		})
 	}
 
@@ -97,6 +98,7 @@ func (s *Server) GetMeWeaponIndex(ctx context.Context, req genapi.GetMeWeaponInd
 			ElementAttack: &ea,
 			PhysicsType:   genapi.PhysicsType(w.PhysicsType),
 			ElementType:   genapi.ElementType(w.ElementType),
+			ImageUrl:      w.ImageURL,
 		})
 	}
 

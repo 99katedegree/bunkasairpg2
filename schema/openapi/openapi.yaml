@@ -800,7 +800,7 @@ components:
           type: string
 
     MonsterSummaryResponse:
-      description: 管理画面向けのモンスターの要約。画像は含まない（フロントの関心のため）。
+      description: 管理画面向けのモンスターの要約。
       type: object
       required: [id, name, indexNumber]
       properties:
@@ -812,9 +812,13 @@ components:
         indexNumber:
           description: 図鑑番号（4 桁の数字）
           type: string
+        imageUrl:
+          description: 画像がまだ用意されていない個体は null
+          type: string
+          nullable: true
 
     WeaponSummaryResponse:
-      description: 管理画面向けの武器の要約。画像は含まない（フロントの関心のため）。
+      description: 管理画面向けの武器の要約。
       type: object
       required: [id, name, indexNumber]
       properties:
@@ -825,9 +829,13 @@ components:
         indexNumber:
           description: 図鑑番号（4 桁の数字）
           type: string
+        imageUrl:
+          description: 画像がまだ用意されていない武器は null
+          type: string
+          nullable: true
 
     ItemSummaryResponse:
-      description: 管理画面向けのアイテムの要約。画像は含まない（フロントの関心のため）。
+      description: 管理画面向けのアイテムの要約。
       type: object
       required: [id, name, indexNumber]
       properties:
@@ -838,6 +846,10 @@ components:
         indexNumber:
           description: 図鑑番号（4 桁の数字）
           type: string
+        imageUrl:
+          description: 画像がまだ用意されていないアイテムは null
+          type: string
+          nullable: true
 
     WeaponResponse:
       type: object
@@ -856,6 +868,9 @@ components:
           $ref: '#/components/schemas/PhysicsType'
         elementType:
           $ref: '#/components/schemas/ElementType'
+        imageUrl:
+          type: string
+          nullable: true
 
     MeResponse:
       type: object
@@ -912,6 +927,9 @@ components:
         target:
           type: string
           description: buff / debuff のみ
+        imageUrl:
+          type: string
+          nullable: true
 
     UserItemResponse:
       allOf:
@@ -985,6 +1003,9 @@ components:
           type: number
         dark:
           type: number
+        imageUrl:
+          type: string
+          nullable: true
         weapon:
           $ref: '#/components/schemas/WeaponResponse'
           nullable: true

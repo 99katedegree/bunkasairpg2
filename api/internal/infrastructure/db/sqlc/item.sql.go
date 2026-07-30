@@ -52,13 +52,14 @@ func (q *Queries) DeleteUserItemIfZero(ctx context.Context, arg DeleteUserItemIf
 }
 
 const getAllItemSummaries = `-- name: GetAllItemSummaries :many
-SELECT id, name, index_number FROM items ORDER BY index_number
+SELECT id, name, index_number, image_url FROM items ORDER BY index_number
 `
 
 type GetAllItemSummariesRow struct {
-	ID          int64  `db:"id" json:"id"`
-	Name        string `db:"name" json:"name"`
-	IndexNumber string `db:"index_number" json:"index_number"`
+	ID          int64          `db:"id" json:"id"`
+	Name        string         `db:"name" json:"name"`
+	IndexNumber string         `db:"index_number" json:"index_number"`
+	ImageUrl    sql.NullString `db:"image_url" json:"image_url"`
 }
 
 // 管理画面の一覧用。図鑑番号は 4 桁ゼロ埋めなので文字列順がそのまま番号順。
@@ -71,7 +72,12 @@ func (q *Queries) GetAllItemSummaries(ctx context.Context) ([]GetAllItemSummarie
 	var items []GetAllItemSummariesRow
 	for rows.Next() {
 		var i GetAllItemSummariesRow
-		if err := rows.Scan(&i.ID, &i.Name, &i.IndexNumber); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.IndexNumber,
+			&i.ImageUrl,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -86,7 +92,7 @@ func (q *Queries) GetAllItemSummaries(ctx context.Context) ([]GetAllItemSummarie
 }
 
 const getItemByID = `-- name: GetItemByID :one
-SELECT i.id, i.name, i.index_number, i.effect_type, i.created_at, i.updated_at,
+SELECT i.id, i.name, i.index_number, i.effect_type, i.image_url, i.created_at, i.updated_at,
     hi.amount, bi.rate as buff_rate, bi.target as buff_target, di.rate as debuff_rate, di.target as debuff_target
 FROM items i
 LEFT JOIN heal_items hi ON i.id = hi.item_id
@@ -100,6 +106,7 @@ type GetItemByIDRow struct {
 	Name         string         `db:"name" json:"name"`
 	IndexNumber  string         `db:"index_number" json:"index_number"`
 	EffectType   string         `db:"effect_type" json:"effect_type"`
+	ImageUrl     sql.NullString `db:"image_url" json:"image_url"`
 	CreatedAt    time.Time      `db:"created_at" json:"created_at"`
 	UpdatedAt    time.Time      `db:"updated_at" json:"updated_at"`
 	Amount       sql.NullInt32  `db:"amount" json:"amount"`
@@ -117,6 +124,7 @@ func (q *Queries) GetItemByID(ctx context.Context, id int64) (GetItemByIDRow, er
 		&i.Name,
 		&i.IndexNumber,
 		&i.EffectType,
+		&i.ImageUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Amount,
@@ -129,7 +137,7 @@ func (q *Queries) GetItemByID(ctx context.Context, id int64) (GetItemByIDRow, er
 }
 
 const getItemIndexByUserID = `-- name: GetItemIndexByUserID :many
-SELECT i.id, i.name, i.index_number, i.effect_type, i.created_at, i.updated_at,
+SELECT i.id, i.name, i.index_number, i.effect_type, i.image_url, i.created_at, i.updated_at,
     hi.amount, bi.rate as buff_rate, bi.target as buff_target, di.rate as debuff_rate, di.target as debuff_target
 FROM items i
 INNER JOIN item_entries ie ON i.id = ie.item_id
@@ -152,6 +160,7 @@ type GetItemIndexByUserIDRow struct {
 	Name         string         `db:"name" json:"name"`
 	IndexNumber  string         `db:"index_number" json:"index_number"`
 	EffectType   string         `db:"effect_type" json:"effect_type"`
+	ImageUrl     sql.NullString `db:"image_url" json:"image_url"`
 	CreatedAt    time.Time      `db:"created_at" json:"created_at"`
 	UpdatedAt    time.Time      `db:"updated_at" json:"updated_at"`
 	Amount       sql.NullInt32  `db:"amount" json:"amount"`
@@ -175,6 +184,7 @@ func (q *Queries) GetItemIndexByUserID(ctx context.Context, arg GetItemIndexByUs
 			&i.Name,
 			&i.IndexNumber,
 			&i.EffectType,
+			&i.ImageUrl,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Amount,
@@ -197,7 +207,7 @@ func (q *Queries) GetItemIndexByUserID(ctx context.Context, arg GetItemIndexByUs
 }
 
 const getItemsByUserID = `-- name: GetItemsByUserID :many
-SELECT i.id, i.name, i.index_number, i.effect_type, i.created_at, i.updated_at,
+SELECT i.id, i.name, i.index_number, i.effect_type, i.image_url, i.created_at, i.updated_at,
     hi.amount, bi.rate as buff_rate, bi.target as buff_target, di.rate as debuff_rate, di.target as debuff_target, ui.count
 FROM items i
 INNER JOIN user_items ui ON i.id = ui.item_id
@@ -212,6 +222,7 @@ type GetItemsByUserIDRow struct {
 	Name         string         `db:"name" json:"name"`
 	IndexNumber  string         `db:"index_number" json:"index_number"`
 	EffectType   string         `db:"effect_type" json:"effect_type"`
+	ImageUrl     sql.NullString `db:"image_url" json:"image_url"`
 	CreatedAt    time.Time      `db:"created_at" json:"created_at"`
 	UpdatedAt    time.Time      `db:"updated_at" json:"updated_at"`
 	Amount       sql.NullInt32  `db:"amount" json:"amount"`
@@ -236,6 +247,7 @@ func (q *Queries) GetItemsByUserID(ctx context.Context, userID string) ([]GetIte
 			&i.Name,
 			&i.IndexNumber,
 			&i.EffectType,
+			&i.ImageUrl,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Amount,

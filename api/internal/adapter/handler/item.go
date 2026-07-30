@@ -19,7 +19,7 @@ func (s *Server) GetItemSummaries(ctx context.Context, req genapi.GetItemSummari
 	}
 	out := make([]genapi.ItemSummaryResponse, 0, len(rows))
 	for _, r := range rows {
-		out = append(out, genapi.ItemSummaryResponse{Id: int(r.ID), Name: r.Name, IndexNumber: r.IndexNumber})
+		out = append(out, genapi.ItemSummaryResponse{Id: int(r.ID), Name: r.Name, IndexNumber: r.IndexNumber, ImageUrl: r.ImageURL})
 	}
 	return genapi.GetItemSummaries200JSONResponse{Items: out}, nil
 }
@@ -47,6 +47,7 @@ func (s *Server) GetItems(ctx context.Context, req genapi.GetItemsRequestObject)
 			Name:       it.Name,
 			EffectType: genapi.EffectType(it.EffectType),
 			Count:      it.Count,
+			ImageUrl:   it.ImageURL,
 		}
 		if it.Amount != nil {
 			r.Amount = it.Amount
@@ -95,6 +96,7 @@ func (s *Server) GetMeItemIndex(ctx context.Context, req genapi.GetMeItemIndexRe
 			Id:         int(it.ID),
 			Name:       it.Name,
 			EffectType: genapi.EffectType(it.EffectType),
+			ImageUrl:   it.ImageURL,
 		}
 		if it.Amount != nil {
 			r.Amount = it.Amount

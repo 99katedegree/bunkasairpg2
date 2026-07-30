@@ -10,6 +10,7 @@ type Item struct {
 	Amount      *int     // heal のみ
 	Rate        *float64 // buff/debuff のみ
 	Target      *string  // buff/debuff のみ (slash|blow|shoot|neutral|flame|water|wood|shine|dark)
+	ImageURL    *string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }

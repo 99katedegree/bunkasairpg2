@@ -28,7 +28,9 @@ package main
 import (
 	"bufio"
 	"context"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -40,6 +42,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
+	"github.com/99katedegree/bunkasairpg2/api/assets"
 	"github.com/99katedegree/bunkasairpg2/api/internal/domain/entity"
 )
 
@@ -191,7 +194,7 @@ func placeholders(rows, columns int, tail string) string {
 }
 
 func insertWeapons(ctx context.Context, tx *sql.Tx) error {
-	const cols = 7
+	const cols = 8
 	size := batchSize(cols)
 	for i := 0; i < len(weapons); i += size {
 		chunk := weapons[i:min(i+size, len(weapons))]
@@ -201,11 +204,15 @@ func insertWeapons(ctx context.Context, tx *sql.Tx) error {
 			if w.ElementAttack != nil {
 				elementAttack = *w.ElementAttack
 			}
+			var imageURL any
+			if u := imageURLFor("weapons", w.IndexNumber); u != nil {
+				imageURL = *u
+			}
 			args = append(args, w.ID, w.Name, w.IndexNumber, w.PhysicsAttack,
-				elementAttack, w.PhysicsType, w.ElementType)
+				elementAttack, w.PhysicsType, w.ElementType, imageURL)
 		}
 		q := `INSERT INTO weapons
-				(id, name, index_number, physics_attack, element_attack, physics_type, element_type, created_at, updated_at)
+				(id, name, index_number, physics_attack, element_attack, physics_type, element_type, image_url, created_at, updated_at)
 			VALUES ` + placeholders(len(chunk), cols, ", NOW(), NOW()") + `
 			ON DUPLICATE KEY UPDATE
 				name = VALUES(name),
@@ -214,6 +221,7 @@ func insertWeapons(ctx context.Context, tx *sql.Tx) error {
 				element_attack = VALUES(element_attack),
 				physics_type = VALUES(physics_type),
 				element_type = VALUES(element_type),
+				image_url = VALUES(image_url),
 				updated_at = NOW()`
 		if _, err := tx.ExecContext(ctx, q, args...); err != nil {
 			return fmt.Errorf("武器の投入 (%d〜%d 件目): %w", i+1, i+len(chunk), err)
@@ -223,20 +231,25 @@ func insertWeapons(ctx context.Context, tx *sql.Tx) error {
 }
 
 func insertItems(ctx context.Context, tx *sql.Tx) error {
-	const cols = 4
+	const cols = 5
 	size := batchSize(cols)
 	for i := 0; i < len(items); i += size {
 		chunk := items[i:min(i+size, len(items))]
 		args := make([]any, 0, len(chunk)*cols)
 		for _, it := range chunk {
-			args = append(args, it.ID, it.Name, it.IndexNumber, it.EffectType)
+			var imageURL any
+			if u := imageURLFor("items", it.IndexNumber); u != nil {
+				imageURL = *u
+			}
+			args = append(args, it.ID, it.Name, it.IndexNumber, it.EffectType, imageURL)
 		}
-		q := `INSERT INTO items (id, name, index_number, effect_type, created_at, updated_at)
+		q := `INSERT INTO items (id, name, index_number, effect_type, image_url, created_at, updated_at)
 			VALUES ` + placeholders(len(chunk), cols, ", NOW(), NOW()") + `
 			ON DUPLICATE KEY UPDATE
 				name = VALUES(name),
 				index_number = VALUES(index_number),
 				effect_type = VALUES(effect_type),
+				image_url = VALUES(image_url),
 				updated_at = NOW()`
 		if _, err := tx.ExecContext(ctx, q, args...); err != nil {
 			return fmt.Errorf("アイテムの投入 (%d〜%d 件目): %w", i+1, i+len(chunk), err)
@@ -304,7 +317,7 @@ func insertItems(ctx context.Context, tx *sql.Tx) error {
 }
 
 func insertMonsters(ctx context.Context, tx *sql.Tx) error {
-	const cols = 18
+	const cols = 19
 	size := batchSize(cols)
 	for i := 0; i < len(monsters); i += size {
 		chunk := monsters[i:min(i+size, len(monsters))]
@@ -317,15 +330,19 @@ func insertMonsters(ctx context.Context, tx *sql.Tx) error {
 			if m.DropItemID != nil {
 				itemID = *m.DropItemID
 			}
+			var imageURL any
+			if u := imageURLFor("monsters", m.IndexNumber); u != nil {
+				imageURL = *u
+			}
 			args = append(args,
 				m.ID, weaponID, itemID, m.IndexNumber, m.Name, m.Attack, m.HitPoint,
-				m.ExperiencePoint, m.RecommendedLevel,
+				m.ExperiencePoint, m.RecommendedLevel, imageURL,
 				m.Res.Slash, m.Res.Blow, m.Res.Shoot,
 				m.Res.Neutral, m.Res.Flame, m.Res.Water, m.Res.Wood, m.Res.Shine, m.Res.Dark)
 		}
 		q := `INSERT INTO monsters
 				(id, weapon_id, item_id, index_number, name, attack, hit_point, experience_point,
-				 recommended_level, slash, blow, shoot, neutral, flame, water, wood, shine, dark,
+				 recommended_level, image_url, slash, blow, shoot, neutral, flame, water, wood, shine, dark,
 				 created_at, updated_at)
 			VALUES ` + placeholders(len(chunk), cols, ", NOW(), NOW()") + `
 			ON DUPLICATE KEY UPDATE
@@ -337,6 +354,7 @@ func insertMonsters(ctx context.Context, tx *sql.Tx) error {
 				hit_point = VALUES(hit_point),
 				experience_point = VALUES(experience_point),
 				recommended_level = VALUES(recommended_level),
+				image_url = VALUES(image_url),
 				slash = VALUES(slash), blow = VALUES(blow), shoot = VALUES(shoot),
 				neutral = VALUES(neutral), flame = VALUES(flame), water = VALUES(water),
 				wood = VALUES(wood), shine = VALUES(shine), dark = VALUES(dark),
@@ -346,6 +364,28 @@ func insertMonsters(ctx context.Context, tx *sql.Tx) error {
 		}
 	}
 	return nil
+}
+
+// imageURLFor は図鑑番号から画像配信ルートの相対パスを組み立てる。
+// assets.Images に実ファイルがある場合だけ返す。まだ描かれていない個体・武器・
+// アイテムは image_url を NULL のままにする（handler/main.go の /assets ルートが
+// 実際に配信できるものだけを指すようにするため）。
+//
+// クエリに内容のハッシュ値（?v=）を付けるのは、main.go の /assets ルートが
+// Cache-Control: immutable を返すため。図鑑番号だけの URL だと、絵を差し替えても
+// ブラウザが古い画像を握ったまま二度と取りに行かなくなる。内容が変われば URL も
+// 変わるようにしておけば、同じ URL は本当に中身が変わらないと保証できるので、
+// 一度取得した画像を安全に「二度と取得しない」ようにできる。
+func imageURLFor(category, indexNumber string) *string {
+	path := fmt.Sprintf("images/%s/%s.png", category, indexNumber)
+	data, err := assets.Images.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+	sum := sha256.Sum256(data)
+	hash := hex.EncodeToString(sum[:])[:8]
+	url := fmt.Sprintf("/assets/%s/%s.png?v=%s", category, indexNumber, hash)
+	return &url
 }
 
 // ============================================================================

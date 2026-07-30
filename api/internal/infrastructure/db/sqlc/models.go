@@ -69,12 +69,13 @@ type Image struct {
 }
 
 type Item struct {
-	ID          int64     `db:"id" json:"id"`
-	Name        string    `db:"name" json:"name"`
-	IndexNumber string    `db:"index_number" json:"index_number"`
-	EffectType  string    `db:"effect_type" json:"effect_type"`
-	CreatedAt   time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt   time.Time `db:"updated_at" json:"updated_at"`
+	ID          int64          `db:"id" json:"id"`
+	Name        string         `db:"name" json:"name"`
+	IndexNumber string         `db:"index_number" json:"index_number"`
+	EffectType  string         `db:"effect_type" json:"effect_type"`
+	CreatedAt   time.Time      `db:"created_at" json:"created_at"`
+	UpdatedAt   time.Time      `db:"updated_at" json:"updated_at"`
+	ImageUrl    sql.NullString `db:"image_url" json:"image_url"`
 }
 
 type ItemEntry struct {
@@ -85,26 +86,27 @@ type ItemEntry struct {
 }
 
 type Monster struct {
-	ID               string        `db:"id" json:"id"`
-	WeaponID         sql.NullInt64 `db:"weapon_id" json:"weapon_id"`
-	ItemID           sql.NullInt64 `db:"item_id" json:"item_id"`
-	IndexNumber      string        `db:"index_number" json:"index_number"`
-	Name             string        `db:"name" json:"name"`
-	Attack           int32         `db:"attack" json:"attack"`
-	HitPoint         int32         `db:"hit_point" json:"hit_point"`
-	ExperiencePoint  int32         `db:"experience_point" json:"experience_point"`
-	Slash            string        `db:"slash" json:"slash"`
-	Blow             string        `db:"blow" json:"blow"`
-	Shoot            string        `db:"shoot" json:"shoot"`
-	Neutral          string        `db:"neutral" json:"neutral"`
-	Flame            string        `db:"flame" json:"flame"`
-	Water            string        `db:"water" json:"water"`
-	Wood             string        `db:"wood" json:"wood"`
-	Shine            string        `db:"shine" json:"shine"`
-	Dark             string        `db:"dark" json:"dark"`
-	CreatedAt        time.Time     `db:"created_at" json:"created_at"`
-	UpdatedAt        time.Time     `db:"updated_at" json:"updated_at"`
-	RecommendedLevel int32         `db:"recommended_level" json:"recommended_level"`
+	ID               string         `db:"id" json:"id"`
+	WeaponID         sql.NullInt64  `db:"weapon_id" json:"weapon_id"`
+	ItemID           sql.NullInt64  `db:"item_id" json:"item_id"`
+	IndexNumber      string         `db:"index_number" json:"index_number"`
+	Name             string         `db:"name" json:"name"`
+	Attack           int32          `db:"attack" json:"attack"`
+	HitPoint         int32          `db:"hit_point" json:"hit_point"`
+	ExperiencePoint  int32          `db:"experience_point" json:"experience_point"`
+	Slash            string         `db:"slash" json:"slash"`
+	Blow             string         `db:"blow" json:"blow"`
+	Shoot            string         `db:"shoot" json:"shoot"`
+	Neutral          string         `db:"neutral" json:"neutral"`
+	Flame            string         `db:"flame" json:"flame"`
+	Water            string         `db:"water" json:"water"`
+	Wood             string         `db:"wood" json:"wood"`
+	Shine            string         `db:"shine" json:"shine"`
+	Dark             string         `db:"dark" json:"dark"`
+	CreatedAt        time.Time      `db:"created_at" json:"created_at"`
+	UpdatedAt        time.Time      `db:"updated_at" json:"updated_at"`
+	RecommendedLevel int32          `db:"recommended_level" json:"recommended_level"`
+	ImageUrl         sql.NullString `db:"image_url" json:"image_url"`
 }
 
 type MonsterEntry struct {
@@ -145,15 +147,16 @@ type UserWeapon struct {
 }
 
 type Weapon struct {
-	ID            int64         `db:"id" json:"id"`
-	Name          string        `db:"name" json:"name"`
-	IndexNumber   string        `db:"index_number" json:"index_number"`
-	PhysicsAttack int32         `db:"physics_attack" json:"physics_attack"`
-	ElementAttack sql.NullInt32 `db:"element_attack" json:"element_attack"`
-	PhysicsType   string        `db:"physics_type" json:"physics_type"`
-	ElementType   string        `db:"element_type" json:"element_type"`
-	CreatedAt     time.Time     `db:"created_at" json:"created_at"`
-	UpdatedAt     time.Time     `db:"updated_at" json:"updated_at"`
+	ID            int64          `db:"id" json:"id"`
+	Name          string         `db:"name" json:"name"`
+	IndexNumber   string         `db:"index_number" json:"index_number"`
+	PhysicsAttack int32          `db:"physics_attack" json:"physics_attack"`
+	ElementAttack sql.NullInt32  `db:"element_attack" json:"element_attack"`
+	PhysicsType   string         `db:"physics_type" json:"physics_type"`
+	ElementType   string         `db:"element_type" json:"element_type"`
+	CreatedAt     time.Time      `db:"created_at" json:"created_at"`
+	UpdatedAt     time.Time      `db:"updated_at" json:"updated_at"`
+	ImageUrl      sql.NullString `db:"image_url" json:"image_url"`
 }
 
 type WeaponEntry struct {

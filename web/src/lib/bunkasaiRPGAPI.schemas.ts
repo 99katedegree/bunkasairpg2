@@ -58,33 +58,48 @@ export interface AuthResponse {
 }
 
 /**
- * 管理画面向けのモンスターの要約。画像は含まない（フロントの関心のため）。
+ * 管理画面向けのモンスターの要約。
  */
 export interface MonsterSummaryResponse {
   id: string;
   name: string;
   /** 図鑑番号（4 桁の数字） */
   indexNumber: string;
+  /**
+     * 画像がまだ用意されていない個体は null
+     * @nullable
+     */
+  imageUrl?: string | null;
 }
 
 /**
- * 管理画面向けの武器の要約。画像は含まない（フロントの関心のため）。
+ * 管理画面向けの武器の要約。
  */
 export interface WeaponSummaryResponse {
   id: number;
   name: string;
   /** 図鑑番号（4 桁の数字） */
   indexNumber: string;
+  /**
+     * 画像がまだ用意されていない武器は null
+     * @nullable
+     */
+  imageUrl?: string | null;
 }
 
 /**
- * 管理画面向けのアイテムの要約。画像は含まない（フロントの関心のため）。
+ * 管理画面向けのアイテムの要約。
  */
 export interface ItemSummaryResponse {
   id: number;
   name: string;
   /** 図鑑番号（4 桁の数字） */
   indexNumber: string;
+  /**
+     * 画像がまだ用意されていないアイテムは null
+     * @nullable
+     */
+  imageUrl?: string | null;
 }
 
 export interface WeaponResponse {
@@ -95,6 +110,8 @@ export interface WeaponResponse {
   elementAttack: number | null;
   physicsType: PhysicsType;
   elementType: ElementType;
+  /** @nullable */
+  imageUrl?: string | null;
 }
 
 export interface MeResponse {
@@ -129,6 +146,8 @@ export interface ItemResponse {
   rate?: number;
   /** buff / debuff のみ */
   target?: string;
+  /** @nullable */
+  imageUrl?: string | null;
 }
 
 export type UserItemResponse = ItemResponse & {
@@ -155,6 +174,8 @@ export interface MonsterDetailResponse {
   wood: number;
   shine: number;
   dark: number;
+  /** @nullable */
+  imageUrl?: string | null;
   weapon?: WeaponResponse | null;
   item?: ItemResponse | null;
 }

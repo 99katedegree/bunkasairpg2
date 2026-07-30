@@ -19,6 +19,7 @@ type Monster struct {
 	HitPoint         int
 	ExperiencePoint  int
 	RecommendedLevel int
+	ImageURL         *string
 	Slash            float64
 	Blow             float64
 	Shoot            float64

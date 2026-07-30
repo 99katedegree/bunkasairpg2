@@ -57,7 +57,7 @@ func (s *Server) GetMonsterSummaries(ctx context.Context, req genapi.GetMonsterS
 	}
 	out := make([]genapi.MonsterSummaryResponse, 0, len(rows))
 	for _, r := range rows {
-		out = append(out, genapi.MonsterSummaryResponse{Id: r.ID, Name: r.Name, IndexNumber: r.IndexNumber})
+		out = append(out, genapi.MonsterSummaryResponse{Id: r.ID, Name: r.Name, IndexNumber: r.IndexNumber, ImageUrl: r.ImageURL})
 	}
 	return genapi.GetMonsterSummaries200JSONResponse{Monsters: out}, nil
 }
@@ -101,6 +101,7 @@ func (s *Server) GetMonster(ctx context.Context, req genapi.GetMonsterRequestObj
 		Attack:           monster.Attack,
 		ExperiencePoint:  monster.ExperiencePoint,
 		RecommendedLevel: monster.RecommendedLevel,
+		ImageUrl:         monster.ImageURL,
 	}
 
 	// 耐性は 0.0 が「等倍」を意味する有効な値なので、必ず詰める。
@@ -129,6 +130,7 @@ func (s *Server) GetMonster(ctx context.Context, req genapi.GetMonsterRequestObj
 			ElementAttack: &ea,
 			PhysicsType:   genapi.PhysicsType(w.PhysicsType),
 			ElementType:   genapi.ElementType(w.ElementType),
+			ImageUrl:      w.ImageURL,
 		}
 	}
 
@@ -138,6 +140,7 @@ func (s *Server) GetMonster(ctx context.Context, req genapi.GetMonsterRequestObj
 			Id:         int(it.ID),
 			Name:       it.Name,
 			EffectType: genapi.EffectType(it.EffectType),
+			ImageUrl:   it.ImageURL,
 		}
 		if it.Amount != nil {
 			r.Amount = it.Amount

@@ -51,13 +51,14 @@ func (q *Queries) GetAllMonsterIDs(ctx context.Context) ([]string, error) {
 }
 
 const getAllMonsterSummaries = `-- name: GetAllMonsterSummaries :many
-SELECT id, name, index_number FROM monsters ORDER BY index_number
+SELECT id, name, index_number, image_url FROM monsters ORDER BY index_number
 `
 
 type GetAllMonsterSummariesRow struct {
-	ID          string `db:"id" json:"id"`
-	Name        string `db:"name" json:"name"`
-	IndexNumber string `db:"index_number" json:"index_number"`
+	ID          string         `db:"id" json:"id"`
+	Name        string         `db:"name" json:"name"`
+	IndexNumber string         `db:"index_number" json:"index_number"`
+	ImageUrl    sql.NullString `db:"image_url" json:"image_url"`
 }
 
 // 管理画面の一覧用。図鑑番号は 4 桁ゼロ埋めなので文字列順がそのまま番号順。
@@ -70,7 +71,12 @@ func (q *Queries) GetAllMonsterSummaries(ctx context.Context) ([]GetAllMonsterSu
 	var items []GetAllMonsterSummariesRow
 	for rows.Next() {
 		var i GetAllMonsterSummariesRow
-		if err := rows.Scan(&i.ID, &i.Name, &i.IndexNumber); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.IndexNumber,
+			&i.ImageUrl,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -86,12 +92,12 @@ func (q *Queries) GetAllMonsterSummaries(ctx context.Context) ([]GetAllMonsterSu
 
 const getMonsterByID = `-- name: GetMonsterByID :one
 SELECT m.id, m.weapon_id, m.item_id, m.index_number, m.name, m.attack, m.hit_point, m.experience_point,
-    m.recommended_level, m.slash, m.blow, m.shoot, m.neutral, m.flame, m.water, m.wood, m.shine, m.dark,
+    m.recommended_level, m.image_url, m.slash, m.blow, m.shoot, m.neutral, m.flame, m.water, m.wood, m.shine, m.dark,
     m.created_at, m.updated_at,
     w.id as weapon_id_j, w.name as weapon_name, w.index_number as weapon_index_number,
-    w.physics_attack, w.element_attack, w.physics_type, w.element_type,
+    w.physics_attack, w.element_attack, w.physics_type, w.element_type, w.image_url as weapon_image_url,
     w.created_at as weapon_created_at, w.updated_at as weapon_updated_at,
-    i.id as item_id_j, i.name as item_name, i.index_number as item_index_number, i.effect_type,
+    i.id as item_id_j, i.name as item_name, i.index_number as item_index_number, i.effect_type, i.image_url as item_image_url,
     i.created_at as item_created_at, i.updated_at as item_updated_at,
     hi.amount, bi.rate as buff_rate, bi.target as buff_target, di.rate as debuff_rate, di.target as debuff_target
 FROM monsters m
@@ -113,6 +119,7 @@ type GetMonsterByIDRow struct {
 	HitPoint          int32          `db:"hit_point" json:"hit_point"`
 	ExperiencePoint   int32          `db:"experience_point" json:"experience_point"`
 	RecommendedLevel  int32          `db:"recommended_level" json:"recommended_level"`
+	ImageUrl          sql.NullString `db:"image_url" json:"image_url"`
 	Slash             string         `db:"slash" json:"slash"`
 	Blow              string         `db:"blow" json:"blow"`
 	Shoot             string         `db:"shoot" json:"shoot"`
@@ -131,12 +138,14 @@ type GetMonsterByIDRow struct {
 	ElementAttack     sql.NullInt32  `db:"element_attack" json:"element_attack"`
 	PhysicsType       sql.NullString `db:"physics_type" json:"physics_type"`
 	ElementType       sql.NullString `db:"element_type" json:"element_type"`
+	WeaponImageUrl    sql.NullString `db:"weapon_image_url" json:"weapon_image_url"`
 	WeaponCreatedAt   sql.NullTime   `db:"weapon_created_at" json:"weapon_created_at"`
 	WeaponUpdatedAt   sql.NullTime   `db:"weapon_updated_at" json:"weapon_updated_at"`
 	ItemIDJ           sql.NullInt64  `db:"item_id_j" json:"item_id_j"`
 	ItemName          sql.NullString `db:"item_name" json:"item_name"`
 	ItemIndexNumber   sql.NullString `db:"item_index_number" json:"item_index_number"`
 	EffectType        sql.NullString `db:"effect_type" json:"effect_type"`
+	ItemImageUrl      sql.NullString `db:"item_image_url" json:"item_image_url"`
 	ItemCreatedAt     sql.NullTime   `db:"item_created_at" json:"item_created_at"`
 	ItemUpdatedAt     sql.NullTime   `db:"item_updated_at" json:"item_updated_at"`
 	Amount            sql.NullInt32  `db:"amount" json:"amount"`
@@ -159,6 +168,7 @@ func (q *Queries) GetMonsterByID(ctx context.Context, id string) (GetMonsterByID
 		&i.HitPoint,
 		&i.ExperiencePoint,
 		&i.RecommendedLevel,
+		&i.ImageUrl,
 		&i.Slash,
 		&i.Blow,
 		&i.Shoot,
@@ -177,12 +187,14 @@ func (q *Queries) GetMonsterByID(ctx context.Context, id string) (GetMonsterByID
 		&i.ElementAttack,
 		&i.PhysicsType,
 		&i.ElementType,
+		&i.WeaponImageUrl,
 		&i.WeaponCreatedAt,
 		&i.WeaponUpdatedAt,
 		&i.ItemIDJ,
 		&i.ItemName,
 		&i.ItemIndexNumber,
 		&i.EffectType,
+		&i.ItemImageUrl,
 		&i.ItemCreatedAt,
 		&i.ItemUpdatedAt,
 		&i.Amount,

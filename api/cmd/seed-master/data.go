@@ -82,8 +82,10 @@ const (
 // ============================================================================
 
 // WeaponSeed は weapons テーブル 1 行。
-// ID は固定値。web/src/constants/weapon-images.ts は ID をキーに画像を引くので、
-// 一度配ったら ID は絶対に変えないこと。
+// ID は固定値（monsters から FK で参照される）。図鑑番号 IndexNumber も一度配ったら
+// 変えないこと。api/assets/images/weapons/{IndexNumber}.png が画像の実体で、
+// imageURLFor（main.go）が図鑑番号からファイル名を組み立てて image_url に書き込む。
+// 番号を変えると既にある画像が迷子になる。
 //
 // 素手は例外で DB に入れない。装備なし（equipped_weapon_id = NULL）のときに
 // handler/me.go が id=0 のハードコード値を返す仕様なので、こちらは data_weapons.go の
@@ -128,8 +130,10 @@ type Resistance struct {
 }
 
 // MonsterSeed は monsters テーブル 1 行。
-// ID は固定 UUID。QR コードのトークンと web/src/constants/monster-images.ts の
-// キーを兼ねるので、一度印刷したら変えないこと。
+// ID は固定 UUID。QR コードのトークンを兼ねるので、一度印刷したら変えないこと。
+// 図鑑番号 IndexNumber も同様に固定。api/assets/images/monsters/{IndexNumber}.png が
+// 画像の実体で、imageURLFor（main.go）が図鑑番号からファイル名を組み立てて
+// image_url に書き込む。番号を変えると既にある画像が迷子になる。
 type MonsterSeed struct {
 	ID               string
 	IndexNumber      string

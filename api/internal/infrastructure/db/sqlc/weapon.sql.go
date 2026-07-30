@@ -7,6 +7,7 @@ package dbgen
 
 import (
 	"context"
+	"database/sql"
 )
 
 const countWeaponIndexByUserID = `-- name: CountWeaponIndexByUserID :one
@@ -21,13 +22,14 @@ func (q *Queries) CountWeaponIndexByUserID(ctx context.Context, userID string) (
 }
 
 const getAllWeaponSummaries = `-- name: GetAllWeaponSummaries :many
-SELECT id, name, index_number FROM weapons ORDER BY index_number
+SELECT id, name, index_number, image_url FROM weapons ORDER BY index_number
 `
 
 type GetAllWeaponSummariesRow struct {
-	ID          int64  `db:"id" json:"id"`
-	Name        string `db:"name" json:"name"`
-	IndexNumber string `db:"index_number" json:"index_number"`
+	ID          int64          `db:"id" json:"id"`
+	Name        string         `db:"name" json:"name"`
+	IndexNumber string         `db:"index_number" json:"index_number"`
+	ImageUrl    sql.NullString `db:"image_url" json:"image_url"`
 }
 
 // 管理画面の一覧用。図鑑番号は 4 桁ゼロ埋めなので文字列順がそのまま番号順。
@@ -40,7 +42,12 @@ func (q *Queries) GetAllWeaponSummaries(ctx context.Context) ([]GetAllWeaponSumm
 	var items []GetAllWeaponSummariesRow
 	for rows.Next() {
 		var i GetAllWeaponSummariesRow
-		if err := rows.Scan(&i.ID, &i.Name, &i.IndexNumber); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.IndexNumber,
+			&i.ImageUrl,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -55,7 +62,7 @@ func (q *Queries) GetAllWeaponSummaries(ctx context.Context) ([]GetAllWeaponSumm
 }
 
 const getWeaponByID = `-- name: GetWeaponByID :one
-SELECT id, name, index_number, physics_attack, element_attack, physics_type, element_type, created_at, updated_at FROM weapons WHERE id = ? LIMIT 1
+SELECT id, name, index_number, physics_attack, element_attack, physics_type, element_type, created_at, updated_at, image_url FROM weapons WHERE id = ? LIMIT 1
 `
 
 func (q *Queries) GetWeaponByID(ctx context.Context, id int64) (Weapon, error) {
@@ -71,12 +78,13 @@ func (q *Queries) GetWeaponByID(ctx context.Context, id int64) (Weapon, error) {
 		&i.ElementType,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ImageUrl,
 	)
 	return i, err
 }
 
 const getWeaponIndexByUserID = `-- name: GetWeaponIndexByUserID :many
-SELECT w.id, w.name, w.index_number, w.physics_attack, w.element_attack, w.physics_type, w.element_type, w.created_at, w.updated_at FROM weapons w
+SELECT w.id, w.name, w.index_number, w.physics_attack, w.element_attack, w.physics_type, w.element_type, w.created_at, w.updated_at, w.image_url FROM weapons w
 INNER JOIN weapon_entries we ON w.id = we.weapon_id
 WHERE we.user_id = ?
 ORDER BY w.id
@@ -108,6 +116,7 @@ func (q *Queries) GetWeaponIndexByUserID(ctx context.Context, arg GetWeaponIndex
 			&i.ElementType,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ImageUrl,
 		); err != nil {
 			return nil, err
 		}
@@ -123,7 +132,7 @@ func (q *Queries) GetWeaponIndexByUserID(ctx context.Context, arg GetWeaponIndex
 }
 
 const getWeaponsByUserID = `-- name: GetWeaponsByUserID :many
-SELECT w.id, w.name, w.index_number, w.physics_attack, w.element_attack, w.physics_type, w.element_type, w.created_at, w.updated_at FROM weapons w
+SELECT w.id, w.name, w.index_number, w.physics_attack, w.element_attack, w.physics_type, w.element_type, w.created_at, w.updated_at, w.image_url FROM weapons w
 INNER JOIN user_weapons uw ON w.id = uw.weapon_id
 WHERE uw.user_id = ?
 `
@@ -147,6 +156,7 @@ func (q *Queries) GetWeaponsByUserID(ctx context.Context, userID string) ([]Weap
 			&i.ElementType,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ImageUrl,
 		); err != nil {
 			return nil, err
 		}

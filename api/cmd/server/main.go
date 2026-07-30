@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -19,6 +20,7 @@ import (
 	echomw "github.com/labstack/echo/v4/middleware"
 	"go.uber.org/dig"
 
+	"github.com/99katedegree/bunkasairpg2/api/assets"
 	"github.com/99katedegree/bunkasairpg2/api/config"
 	genapi "github.com/99katedegree/bunkasairpg2/api/gen/api"
 	mw "github.com/99katedegree/bunkasairpg2/api/internal/adapter/middleware"
@@ -214,6 +216,10 @@ func main() {
 		// The Auth middleware does not natively support a Skipper, so we wrap it.
 		authSkipper := func(c echo.Context) bool {
 			path := c.Path()
+			if strings.HasPrefix(path, "/assets/") {
+				// <img> タグは Authorization ヘッダを付けられないので、画像配信は認証をかけない。
+				return true
+			}
 			return path == "/health" || path == "/auth/user-login" || path == "/auth/admin-login" || path == "/admin/images"
 		}
 		e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
@@ -225,6 +231,19 @@ func main() {
 				return authMW(next)(c)
 			}
 		})
+
+		// 武器・アイテム・モンスターの画像配信。バイナリに同梱した embed.FS を配る
+		// だけなので DB を経由しない。図鑑番号を書き換えてもファイル名さえ揃えれば
+		// 反映されるので、リサイズ・差し替えのたびに config を触る必要がない。
+		imagesFS := echo.MustSubFS(assets.Images, "images")
+		assetsGroup := e.Group("/assets")
+		assetsGroup.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+			return func(c echo.Context) error {
+				c.Response().Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+				return next(c)
+			}
+		})
+		assetsGroup.StaticFS("/", imagesFS)
 
 		// Register routes via oapi-codegen generated helpers
 		genapi.RegisterHandlers(e, genapi.NewStrictHandler(srv, []genapi.StrictMiddlewareFunc{}))

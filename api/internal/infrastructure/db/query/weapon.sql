@@ -1,6 +1,6 @@
 -- name: GetAllWeaponSummaries :many
 -- 管理画面の一覧用。図鑑番号は 4 桁ゼロ埋めなので文字列順がそのまま番号順。
-SELECT id, name, index_number FROM weapons ORDER BY index_number;
+SELECT id, name, index_number, image_url FROM weapons ORDER BY index_number;
 
 -- name: GetWeaponByID :one
 SELECT * FROM weapons WHERE id = ? LIMIT 1;

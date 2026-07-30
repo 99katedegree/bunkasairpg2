@@ -40,7 +40,7 @@ type DebuffItem = {
 
 export class Battle {
   protected user: User;
-  protected monster: MonsterDetailResponse & { maxHitPoint: number; imageUrl?: string };
+  protected monster: MonsterDetailResponse & { maxHitPoint: number; imageUrl?: string | null };
   protected buffs = {
     slash: 0.0,
     blow: 0.0,
@@ -70,7 +70,7 @@ export class Battle {
 
   constructor(
     user: User,
-    monster: MonsterDetailResponse & { maxHitPoint: number; imageUrl?: string },
+    monster: MonsterDetailResponse & { maxHitPoint: number; imageUrl?: string | null },
     isBoss: boolean = false,
     rng: () => number = Math.random
   ) {
@@ -84,7 +84,7 @@ export class Battle {
     return this.actions;
   }
 
-  public getMonster(): MonsterDetailResponse & { maxHitPoint: number; imageUrl?: string } {
+  public getMonster(): MonsterDetailResponse & { maxHitPoint: number; imageUrl?: string | null } {
     return this.monster;
   }
 

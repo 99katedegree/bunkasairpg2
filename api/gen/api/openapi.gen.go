@@ -232,6 +232,7 @@ type ItemResponse struct {
 	Amount     *int       `json:"amount,omitempty"`
 	EffectType EffectType `json:"effectType"`
 	Id         int        `json:"id"`
+	ImageUrl   *string    `json:"imageUrl,omitempty"`
 	Name       string     `json:"name"`
 
 	// Rate buff / debuff のみ
@@ -241,9 +242,12 @@ type ItemResponse struct {
 	Target *string `json:"target,omitempty"`
 }
 
-// ItemSummaryResponse 管理画面向けのアイテムの要約。画像は含まない（フロントの関心のため）。
+// ItemSummaryResponse 管理画面向けのアイテムの要約。
 type ItemSummaryResponse struct {
 	Id int `json:"id"`
+
+	// ImageUrl 画像がまだ用意されていないアイテムは null
+	ImageUrl *string `json:"imageUrl,omitempty"`
 
 	// IndexNumber 図鑑番号（4 桁の数字）
 	IndexNumber string `json:"indexNumber"`
@@ -275,6 +279,7 @@ type MonsterDetailResponse struct {
 	Flame            float32            `json:"flame"`
 	HitPoint         int                `json:"hitPoint"`
 	Id               openapi_types.UUID `json:"id"`
+	ImageUrl         *string            `json:"imageUrl,omitempty"`
 	Item             *ItemResponse      `json:"item,omitempty"`
 	Name             string             `json:"name"`
 	Neutral          float32            `json:"neutral"`
@@ -287,9 +292,12 @@ type MonsterDetailResponse struct {
 	Wood             float32            `json:"wood"`
 }
 
-// MonsterSummaryResponse 管理画面向けのモンスターの要約。画像は含まない（フロントの関心のため）。
+// MonsterSummaryResponse 管理画面向けのモンスターの要約。
 type MonsterSummaryResponse struct {
 	Id openapi_types.UUID `json:"id"`
+
+	// ImageUrl 画像がまだ用意されていない個体は null
+	ImageUrl *string `json:"imageUrl,omitempty"`
 
 	// IndexNumber 図鑑番号（4 桁の数字）
 	IndexNumber string `json:"indexNumber"`
@@ -321,6 +329,7 @@ type UserItemResponse struct {
 	Count      int        `json:"count"`
 	EffectType EffectType `json:"effectType"`
 	Id         int        `json:"id"`
+	ImageUrl   *string    `json:"imageUrl,omitempty"`
 	Name       string     `json:"name"`
 
 	// Rate buff / debuff のみ
@@ -340,14 +349,18 @@ type WeaponResponse struct {
 	ElementAttack *float32    `json:"elementAttack"`
 	ElementType   ElementType `json:"elementType"`
 	Id            int         `json:"id"`
+	ImageUrl      *string     `json:"imageUrl,omitempty"`
 	Name          string      `json:"name"`
 	PhysicsAttack float32     `json:"physicsAttack"`
 	PhysicsType   PhysicsType `json:"physicsType"`
 }
 
-// WeaponSummaryResponse 管理画面向けの武器の要約。画像は含まない（フロントの関心のため）。
+// WeaponSummaryResponse 管理画面向けの武器の要約。
 type WeaponSummaryResponse struct {
 	Id int `json:"id"`
+
+	// ImageUrl 画像がまだ用意されていない武器は null
+	ImageUrl *string `json:"imageUrl,omitempty"`
 
 	// IndexNumber 図鑑番号（4 桁の数字）
 	IndexNumber string `json:"indexNumber"`

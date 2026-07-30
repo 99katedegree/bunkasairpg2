@@ -1,9 +1,9 @@
 -- name: GetAllItemSummaries :many
 -- 管理画面の一覧用。図鑑番号は 4 桁ゼロ埋めなので文字列順がそのまま番号順。
-SELECT id, name, index_number FROM items ORDER BY index_number;
+SELECT id, name, index_number, image_url FROM items ORDER BY index_number;
 
 -- name: GetItemByID :one
-SELECT i.id, i.name, i.index_number, i.effect_type, i.created_at, i.updated_at,
+SELECT i.id, i.name, i.index_number, i.effect_type, i.image_url, i.created_at, i.updated_at,
     hi.amount, bi.rate as buff_rate, bi.target as buff_target, di.rate as debuff_rate, di.target as debuff_target
 FROM items i
 LEFT JOIN heal_items hi ON i.id = hi.item_id
@@ -12,7 +12,7 @@ LEFT JOIN debuff_items di ON i.id = di.item_id
 WHERE i.id = ? LIMIT 1;
 
 -- name: GetItemsByUserID :many
-SELECT i.id, i.name, i.index_number, i.effect_type, i.created_at, i.updated_at,
+SELECT i.id, i.name, i.index_number, i.effect_type, i.image_url, i.created_at, i.updated_at,
     hi.amount, bi.rate as buff_rate, bi.target as buff_target, di.rate as debuff_rate, di.target as debuff_target, ui.count
 FROM items i
 INNER JOIN user_items ui ON i.id = ui.item_id
@@ -22,7 +22,7 @@ LEFT JOIN debuff_items di ON i.id = di.item_id
 WHERE ui.user_id = ?;
 
 -- name: GetItemIndexByUserID :many
-SELECT i.id, i.name, i.index_number, i.effect_type, i.created_at, i.updated_at,
+SELECT i.id, i.name, i.index_number, i.effect_type, i.image_url, i.created_at, i.updated_at,
     hi.amount, bi.rate as buff_rate, bi.target as buff_target, di.rate as debuff_rate, di.target as debuff_target
 FROM items i
 INNER JOIN item_entries ie ON i.id = ie.item_id

@@ -49,6 +49,7 @@ func (r *monsterRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity
 		HitPoint:         int(row.HitPoint),
 		ExperiencePoint:  int(row.ExperiencePoint),
 		RecommendedLevel: int(row.RecommendedLevel),
+		ImageURL:         nullStringPtr(row.ImageUrl),
 		Slash:            parseDecimal(row.Slash),
 		Blow:             parseDecimal(row.Blow),
 		Shoot:            parseDecimal(row.Shoot),
@@ -81,6 +82,7 @@ func (r *monsterRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity
 			PhysicsAttack: physicsAttack,
 			PhysicsType:   row.PhysicsType.String,
 			ElementType:   row.ElementType.String,
+			ImageURL:      nullStringPtr(row.WeaponImageUrl),
 		}
 		if row.ElementAttack.Valid {
 			ea := float64(row.ElementAttack.Int32)
@@ -102,6 +104,7 @@ func (r *monsterRepository) FindByID(ctx context.Context, id uuid.UUID) (*entity
 			Name:        row.ItemName.String,
 			IndexNumber: row.ItemIndexNumber.String,
 			EffectType:  row.EffectType.String,
+			ImageURL:    nullStringPtr(row.ItemImageUrl),
 		}
 		if row.ItemCreatedAt.Valid {
 			item.CreatedAt = row.ItemCreatedAt.Time
@@ -158,7 +161,10 @@ func (r *monsterRepository) FindAllSummaries(ctx context.Context) ([]entity.Mons
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, entity.MonsterSummary{ID: id, Name: row.Name, IndexNumber: row.IndexNumber})
+		out = append(out, entity.MonsterSummary{
+			ID: id, Name: row.Name, IndexNumber: row.IndexNumber,
+			ImageURL: nullStringPtr(row.ImageUrl),
+		})
 	}
 	return out, nil
 }

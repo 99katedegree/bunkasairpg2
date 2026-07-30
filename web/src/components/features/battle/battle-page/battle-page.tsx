@@ -55,7 +55,7 @@ type Props = {
   battle: Battle;
   monsterAttackLogs: (
     setBattlePhase: (bp: BattlePhase) => void,
-    setMonster: (m: MonsterDetailResponse & { maxHitPoint: number; imageUrl?: string }) => void
+    setMonster: (m: MonsterDetailResponse & { maxHitPoint: number; imageUrl?: string | null }) => void
   ) => BattleLog[];
   // 報酬はサーバーが決めるため必須。クライアント側で計算する経路は持たない。
   onVictory: (battle: Battle) => Promise<VictoryResult>;
@@ -67,7 +67,7 @@ export function BattlePage({ battle, monsterAttackLogs, onVictory }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [monster, setMonster] = useState<
-    MonsterDetailResponse & { maxHitPoint: number; imageUrl?: string }
+    MonsterDetailResponse & { maxHitPoint: number; imageUrl?: string | null }
   >(
     structuredClone({
       ...battle.getMonster(),

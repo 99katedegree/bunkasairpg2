@@ -21,6 +21,15 @@ func NewWeaponRepository(db *sql.DB) domainrepo.WeaponRepository {
 	return &weaponRepository{db: db, q: dbgen.New(db)}
 }
 
+// nullStringPtr は sql.NullString を *string に変換する。無効なら nil。
+func nullStringPtr(s sql.NullString) *string {
+	if !s.Valid {
+		return nil
+	}
+	v := s.String
+	return &v
+}
+
 func weaponFromDB(w dbgen.Weapon) *entity.Weapon {
 	e := &entity.Weapon{
 		ID:            w.ID,
@@ -29,6 +38,7 @@ func weaponFromDB(w dbgen.Weapon) *entity.Weapon {
 		PhysicsAttack: float64(w.PhysicsAttack),
 		PhysicsType:   w.PhysicsType,
 		ElementType:   w.ElementType,
+		ImageURL:      nullStringPtr(w.ImageUrl),
 		CreatedAt:     w.CreatedAt,
 		UpdatedAt:     w.UpdatedAt,
 	}
@@ -47,7 +57,10 @@ func (r *weaponRepository) FindAllSummaries(ctx context.Context) ([]entity.Weapo
 	// sqlc は 0 件のとき nil を返す。JSON で null にならないよう空スライスで初期化する。
 	out := make([]entity.WeaponSummary, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, entity.WeaponSummary{ID: row.ID, Name: row.Name, IndexNumber: row.IndexNumber})
+		out = append(out, entity.WeaponSummary{
+			ID: row.ID, Name: row.Name, IndexNumber: row.IndexNumber,
+			ImageURL: nullStringPtr(row.ImageUrl),
+		})
 	}
 	return out, nil
 }
