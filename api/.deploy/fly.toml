@@ -1,0 +1,25 @@
+# Fly.io アプリ設定（fly launch --config .deploy/fly.toml --dockerfile .deploy/Dockerfile で生成）。
+#
+# DB / R2 / JWT 等の秘密情報は fly.toml に書かず `fly secrets set`（または
+# `fly secrets import < .env`）で投入する（必要な変数は api/.env.example を参照）。
+#
+# このファイルは api/.deploy/ 配下にあるが、ビルドコンテキストは api/ のまま。
+# `flyctl deploy` は api/ で実行し、--config .deploy/fly.toml --dockerfile .deploy/Dockerfile
+# を明示的に渡す（.github/workflows/deploy-api.yml 参照）。
+app = 'bunkasairpg2'
+primary_region = 'nrt'
+
+[build]
+  dockerfile = '.deploy/Dockerfile'
+
+[http_service]
+  internal_port = 8085
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ['app']
+
+[[vm]]
+  size = 'shared-cpu-1x'
+  memory = '1gb'
