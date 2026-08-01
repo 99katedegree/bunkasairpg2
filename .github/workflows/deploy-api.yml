@@ -1,13 +1,15 @@
 name: Deploy API to Fly.io
 
-# api/ に変更が入って main に push されたときだけ動く。
+# api/ に変更が入って main に push されたときに動く。
 # モノレポなので web/ や schema/ だけの変更ではトリガーしない。
+# workflow_dispatch は Actions 画面から手動で再実行したいときのため。
 on:
   push:
     branches: [main]
     paths:
       - "api/**"
       - ".github/workflows/deploy-api.yml"
+  workflow_dispatch:
 
 jobs:
   deploy:
