@@ -204,7 +204,8 @@ func insertWeapons(ctx context.Context, tx *sql.Tx) error {
 			if w.ElementAttack != nil {
 				elementAttack = *w.ElementAttack
 			}
-			var imageURL any
+			// 画像がまだ無い武器は NULL ではなく空文字にする。
+			imageURL := ""
 			if u := imageURLFor("weapons", w.IndexNumber); u != nil {
 				imageURL = *u
 			}
@@ -237,7 +238,8 @@ func insertItems(ctx context.Context, tx *sql.Tx) error {
 		chunk := items[i:min(i+size, len(items))]
 		args := make([]any, 0, len(chunk)*cols)
 		for _, it := range chunk {
-			var imageURL any
+			// 画像がまだ無いアイテムは NULL ではなく空文字にする。
+			imageURL := ""
 			if u := imageURLFor("items", it.IndexNumber); u != nil {
 				imageURL = *u
 			}
