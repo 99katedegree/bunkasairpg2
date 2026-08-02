@@ -21,9 +21,10 @@ jobs:
       - uses: superfly/flyctl-actions/setup-flyctl@master
 
       - name: Deploy to Fly.io
-        # Dockerfile / fly.toml は api/.deploy/ にあるが、ビルドコンテキストは
-        # api/ に保つため、実行ディレクトリは api/ のままパスだけ明示する。
+        # fly.toml は api/.deploy/ にあるが、ビルドコンテキストは api/ に保つため
+        # 実行ディレクトリは api/ のまま --config だけ渡す。dockerfile のパスは
+        # fly.toml 側（.deploy/ からの相対）で解決されるので指定しない。
         working-directory: api
-        run: flyctl deploy --remote-only --config .deploy/fly.toml --dockerfile .deploy/Dockerfile
+        run: flyctl deploy --remote-only --config .deploy/fly.toml
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

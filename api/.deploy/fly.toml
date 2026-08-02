@@ -10,7 +10,8 @@ app = 'bunkasairpg2'
 primary_region = 'nrt'
 
 [build]
-  dockerfile = '.deploy/Dockerfile'
+  # fly.toml 自身の場所（api/.deploy/）からの相対パス。
+  dockerfile = 'Dockerfile'
 
 [http_service]
   internal_port = 8085
