@@ -49,7 +49,7 @@ export const getUploadImageUrl = () => {
 
 
 
-  return `http://localhost:8085/images`
+  return `${process.env.NEXT_PUBLIC_API_URL}/images`
 }
 
 /**
@@ -84,7 +84,7 @@ export const getUploadImageMutationFetcher = ( options?: RequestInit) => {
     return uploadImage(arg, options);
   }
 }
-export const getUploadImageMutationKey = () => [`http://localhost:8085/images`] as const;
+export const getUploadImageMutationKey = () => [`${process.env.NEXT_PUBLIC_API_URL}/images`] as const;
 
 export type UploadImageMutationResult = NonNullable<Awaited<ReturnType<typeof uploadImage>>>
 

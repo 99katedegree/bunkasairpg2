@@ -50,7 +50,7 @@ export const getUserLoginUrl = () => {
 
 
 
-  return `http://localhost:8085/auth/user-login`
+  return `${process.env.NEXT_PUBLIC_API_URL}/auth/user-login`
 }
 
 /**
@@ -82,7 +82,7 @@ export const getUserLoginMutationFetcher = ( options?: RequestInit) => {
     return userLogin(arg, options);
   }
 }
-export const getUserLoginMutationKey = () => [`http://localhost:8085/auth/user-login`] as const;
+export const getUserLoginMutationKey = () => [`${process.env.NEXT_PUBLIC_API_URL}/auth/user-login`] as const;
 
 export type UserLoginMutationResult = NonNullable<Awaited<ReturnType<typeof userLogin>>>
 
@@ -129,7 +129,7 @@ export const getAdminLoginUrl = () => {
 
 
 
-  return `http://localhost:8085/auth/admin-login`
+  return `${process.env.NEXT_PUBLIC_API_URL}/auth/admin-login`
 }
 
 /**
@@ -161,7 +161,7 @@ export const getAdminLoginMutationFetcher = ( options?: RequestInit) => {
     return adminLogin(arg, options);
   }
 }
-export const getAdminLoginMutationKey = () => [`http://localhost:8085/auth/admin-login`] as const;
+export const getAdminLoginMutationKey = () => [`${process.env.NEXT_PUBLIC_API_URL}/auth/admin-login`] as const;
 
 export type AdminLoginMutationResult = NonNullable<Awaited<ReturnType<typeof adminLogin>>>
 

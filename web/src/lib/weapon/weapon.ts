@@ -48,7 +48,7 @@ export const getGetWeaponsUrl = () => {
 
 
 
-  return `http://localhost:8085/weapons`
+  return `${process.env.NEXT_PUBLIC_API_URL}/weapons`
 }
 
 /**
@@ -75,7 +75,7 @@ export const getWeapons = async ( options?: RequestInit): Promise<getWeaponsResp
 
 
 
-export const getGetWeaponsKey = () => [`http://localhost:8085/weapons`] as const;
+export const getGetWeaponsKey = () => [`${process.env.NEXT_PUBLIC_API_URL}/weapons`] as const;
 
 export type GetWeaponsQueryResult = NonNullable<Awaited<ReturnType<typeof getWeapons>>>
 
@@ -129,7 +129,7 @@ export const getGetMeWeaponIndexUrl = (params?: GetMeWeaponIndexParams,) => {
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `http://localhost:8085/weapons/index?${stringifiedParams}` : `http://localhost:8085/weapons/index`
+  return stringifiedParams.length > 0 ? `${process.env.NEXT_PUBLIC_API_URL}/weapons/index?${stringifiedParams}` : `${process.env.NEXT_PUBLIC_API_URL}/weapons/index`
 }
 
 /**
@@ -156,7 +156,7 @@ export const getMeWeaponIndex = async (params?: GetMeWeaponIndexParams, options?
 
 
 
-export const getGetMeWeaponIndexKey = (params?: GetMeWeaponIndexParams,) => [`http://localhost:8085/weapons/index`, ...(params ? [params]: [])] as const;
+export const getGetMeWeaponIndexKey = (params?: GetMeWeaponIndexParams,) => [`${process.env.NEXT_PUBLIC_API_URL}/weapons/index`, ...(params ? [params]: [])] as const;
 
 export type GetMeWeaponIndexQueryResult = NonNullable<Awaited<ReturnType<typeof getMeWeaponIndex>>>
 
@@ -203,7 +203,7 @@ export const getGetWeaponSummariesUrl = () => {
 
 
 
-  return `http://localhost:8085/weapons/summaries`
+  return `${process.env.NEXT_PUBLIC_API_URL}/weapons/summaries`
 }
 
 /**
@@ -233,7 +233,7 @@ export const getWeaponSummaries = async ( options?: RequestInit): Promise<getWea
 
 
 
-export const getGetWeaponSummariesKey = () => [`http://localhost:8085/weapons/summaries`] as const;
+export const getGetWeaponSummariesKey = () => [`${process.env.NEXT_PUBLIC_API_URL}/weapons/summaries`] as const;
 
 export type GetWeaponSummariesQueryResult = NonNullable<Awaited<ReturnType<typeof getWeaponSummaries>>>
 

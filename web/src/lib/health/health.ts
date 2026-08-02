@@ -37,7 +37,7 @@ export const getHealthCheckUrl = () => {
 
 
 
-  return `http://localhost:8085/health`
+  return `${process.env.NEXT_PUBLIC_API_URL}/health`
 }
 
 /**
@@ -64,7 +64,7 @@ export const healthCheck = async ( options?: RequestInit): Promise<healthCheckRe
 
 
 
-export const getHealthCheckKey = () => [`http://localhost:8085/health`] as const;
+export const getHealthCheckKey = () => [`${process.env.NEXT_PUBLIC_API_URL}/health`] as const;
 
 export type HealthCheckQueryResult = NonNullable<Awaited<ReturnType<typeof healthCheck>>>
 

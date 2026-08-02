@@ -50,7 +50,7 @@ export const getStartGameUrl = () => {
 
 
 
-  return `http://localhost:8085/game/start`
+  return `${process.env.NEXT_PUBLIC_API_URL}/game/start`
 }
 
 /**
@@ -84,7 +84,7 @@ export const getStartGameMutationFetcher = ( options?: RequestInit) => {
     return startGame(arg, options);
   }
 }
-export const getStartGameMutationKey = () => [`http://localhost:8085/game/start`] as const;
+export const getStartGameMutationKey = () => [`${process.env.NEXT_PUBLIC_API_URL}/game/start`] as const;
 
 export type StartGameMutationResult = NonNullable<Awaited<ReturnType<typeof startGame>>>
 
@@ -131,7 +131,7 @@ export const getArchiveGameUrl = () => {
 
 
 
-  return `http://localhost:8085/game/archive`
+  return `${process.env.NEXT_PUBLIC_API_URL}/game/archive`
 }
 
 /**
@@ -164,7 +164,7 @@ export const getArchiveGameMutationFetcher = ( options?: RequestInit) => {
     return archiveGame(options);
   }
 }
-export const getArchiveGameMutationKey = () => [`http://localhost:8085/game/archive`] as const;
+export const getArchiveGameMutationKey = () => [`${process.env.NEXT_PUBLIC_API_URL}/game/archive`] as const;
 
 export type ArchiveGameMutationResult = NonNullable<Awaited<ReturnType<typeof archiveGame>>>
 

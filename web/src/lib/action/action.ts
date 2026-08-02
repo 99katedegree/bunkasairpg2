@@ -55,7 +55,7 @@ export const getUseMeItemUrl = () => {
 
 
 
-  return `http://localhost:8085/actions/use-items`
+  return `${process.env.NEXT_PUBLIC_API_URL}/actions/use-items`
 }
 
 /**
@@ -87,7 +87,7 @@ export const getUseMeItemMutationFetcher = ( options?: RequestInit) => {
     return useMeItem(arg, options);
   }
 }
-export const getUseMeItemMutationKey = () => [`http://localhost:8085/actions/use-items`] as const;
+export const getUseMeItemMutationKey = () => [`${process.env.NEXT_PUBLIC_API_URL}/actions/use-items`] as const;
 
 export type UseMeItemMutationResult = NonNullable<Awaited<ReturnType<typeof useMeItem>>>
 
@@ -139,7 +139,7 @@ export const getChangeMeWeaponUrl = () => {
 
 
 
-  return `http://localhost:8085/actions/change-weapons`
+  return `${process.env.NEXT_PUBLIC_API_URL}/actions/change-weapons`
 }
 
 /**
@@ -171,7 +171,7 @@ export const getChangeMeWeaponMutationFetcher = ( options?: RequestInit) => {
     return changeMeWeapon(arg, options);
   }
 }
-export const getChangeMeWeaponMutationKey = () => [`http://localhost:8085/actions/change-weapons`] as const;
+export const getChangeMeWeaponMutationKey = () => [`${process.env.NEXT_PUBLIC_API_URL}/actions/change-weapons`] as const;
 
 export type ChangeMeWeaponMutationResult = NonNullable<Awaited<ReturnType<typeof changeMeWeapon>>>
 

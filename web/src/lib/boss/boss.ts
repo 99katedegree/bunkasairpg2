@@ -52,7 +52,7 @@ export const getStartBossBattleUrl = () => {
 
 
 
-  return `http://localhost:8085/boss-battles/start`
+  return `${process.env.NEXT_PUBLIC_API_URL}/boss-battles/start`
 }
 
 /**
@@ -84,7 +84,7 @@ export const getStartBossBattleMutationFetcher = ( options?: RequestInit) => {
     return startBossBattle(options);
   }
 }
-export const getStartBossBattleMutationKey = () => [`http://localhost:8085/boss-battles/start`] as const;
+export const getStartBossBattleMutationKey = () => [`${process.env.NEXT_PUBLIC_API_URL}/boss-battles/start`] as const;
 
 export type StartBossBattleMutationResult = NonNullable<Awaited<ReturnType<typeof startBossBattle>>>
 
@@ -136,7 +136,7 @@ export const getFinishBossBattleUrl = () => {
 
 
 
-  return `http://localhost:8085/boss-battles/finish`
+  return `${process.env.NEXT_PUBLIC_API_URL}/boss-battles/finish`
 }
 
 /**
@@ -168,7 +168,7 @@ export const getFinishBossBattleMutationFetcher = ( options?: RequestInit) => {
     return finishBossBattle(arg, options);
   }
 }
-export const getFinishBossBattleMutationKey = () => [`http://localhost:8085/boss-battles/finish`] as const;
+export const getFinishBossBattleMutationKey = () => [`${process.env.NEXT_PUBLIC_API_URL}/boss-battles/finish`] as const;
 
 export type FinishBossBattleMutationResult = NonNullable<Awaited<ReturnType<typeof finishBossBattle>>>
 

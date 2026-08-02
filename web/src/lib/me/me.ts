@@ -51,7 +51,7 @@ export const getGetMeUrl = () => {
 
 
 
-  return `http://localhost:8085/me`
+  return `${process.env.NEXT_PUBLIC_API_URL}/me`
 }
 
 /**
@@ -78,7 +78,7 @@ export const getMe = async ( options?: RequestInit): Promise<getMeResponse> => {
 
 
 
-export const getGetMeKey = () => [`http://localhost:8085/me`] as const;
+export const getGetMeKey = () => [`${process.env.NEXT_PUBLIC_API_URL}/me`] as const;
 
 export type GetMeQueryResult = NonNullable<Awaited<ReturnType<typeof getMe>>>
 
@@ -125,7 +125,7 @@ export const getUpdateMeUrl = () => {
 
 
 
-  return `http://localhost:8085/me`
+  return `${process.env.NEXT_PUBLIC_API_URL}/me`
 }
 
 /**
@@ -157,7 +157,7 @@ export const getUpdateMeMutationFetcher = ( options?: RequestInit) => {
     return updateMe(arg, options);
   }
 }
-export const getUpdateMeMutationKey = () => [`http://localhost:8085/me`] as const;
+export const getUpdateMeMutationKey = () => [`${process.env.NEXT_PUBLIC_API_URL}/me`] as const;
 
 export type UpdateMeMutationResult = NonNullable<Awaited<ReturnType<typeof updateMe>>>
 

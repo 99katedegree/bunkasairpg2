@@ -57,7 +57,7 @@ export const getGetMonstersUrl = (params?: GetMonstersParams,) => {
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `http://localhost:8085/monsters/index?${stringifiedParams}` : `http://localhost:8085/monsters/index`
+  return stringifiedParams.length > 0 ? `${process.env.NEXT_PUBLIC_API_URL}/monsters/index?${stringifiedParams}` : `${process.env.NEXT_PUBLIC_API_URL}/monsters/index`
 }
 
 /**
@@ -84,7 +84,7 @@ export const getMonsters = async (params?: GetMonstersParams, options?: RequestI
 
 
 
-export const getGetMonstersKey = (params?: GetMonstersParams,) => [`http://localhost:8085/monsters/index`, ...(params ? [params]: [])] as const;
+export const getGetMonstersKey = (params?: GetMonstersParams,) => [`${process.env.NEXT_PUBLIC_API_URL}/monsters/index`, ...(params ? [params]: [])] as const;
 
 export type GetMonstersQueryResult = NonNullable<Awaited<ReturnType<typeof getMonsters>>>
 
@@ -131,7 +131,7 @@ export const getGetMonsterSummariesUrl = () => {
 
 
 
-  return `http://localhost:8085/monsters/summaries`
+  return `${process.env.NEXT_PUBLIC_API_URL}/monsters/summaries`
 }
 
 /**
@@ -161,7 +161,7 @@ export const getMonsterSummaries = async ( options?: RequestInit): Promise<getMo
 
 
 
-export const getGetMonsterSummariesKey = () => [`http://localhost:8085/monsters/summaries`] as const;
+export const getGetMonsterSummariesKey = () => [`${process.env.NEXT_PUBLIC_API_URL}/monsters/summaries`] as const;
 
 export type GetMonsterSummariesQueryResult = NonNullable<Awaited<ReturnType<typeof getMonsterSummaries>>>
 
@@ -208,7 +208,7 @@ export const getGetMonsterBattleTokensUrl = () => {
 
 
 
-  return `http://localhost:8085/monsters/battle-tokens`
+  return `${process.env.NEXT_PUBLIC_API_URL}/monsters/battle-tokens`
 }
 
 /**
@@ -235,7 +235,7 @@ export const getMonsterBattleTokens = async ( options?: RequestInit): Promise<ge
 
 
 
-export const getGetMonsterBattleTokensKey = () => [`http://localhost:8085/monsters/battle-tokens`] as const;
+export const getGetMonsterBattleTokensKey = () => [`${process.env.NEXT_PUBLIC_API_URL}/monsters/battle-tokens`] as const;
 
 export type GetMonsterBattleTokensQueryResult = NonNullable<Awaited<ReturnType<typeof getMonsterBattleTokens>>>
 
@@ -287,7 +287,7 @@ export const getGetMonsterUrl = (monsterId: string,) => {
 
 
 
-  return `http://localhost:8085/monsters/${monsterId}`
+  return `${process.env.NEXT_PUBLIC_API_URL}/monsters/${monsterId}`
 }
 
 /**
@@ -314,7 +314,7 @@ export const getMonster = async (monsterId: string, options?: RequestInit): Prom
 
 
 
-export const getGetMonsterKey = (monsterId: string,) => [`http://localhost:8085/monsters/${monsterId}`] as const;
+export const getGetMonsterKey = (monsterId: string,) => [`${process.env.NEXT_PUBLIC_API_URL}/monsters/${monsterId}`] as const;
 
 export type GetMonsterQueryResult = NonNullable<Awaited<ReturnType<typeof getMonster>>>
 

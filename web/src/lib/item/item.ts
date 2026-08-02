@@ -48,7 +48,7 @@ export const getGetItemsUrl = () => {
 
 
 
-  return `http://localhost:8085/items`
+  return `${process.env.NEXT_PUBLIC_API_URL}/items`
 }
 
 /**
@@ -75,7 +75,7 @@ export const getItems = async ( options?: RequestInit): Promise<getItemsResponse
 
 
 
-export const getGetItemsKey = () => [`http://localhost:8085/items`] as const;
+export const getGetItemsKey = () => [`${process.env.NEXT_PUBLIC_API_URL}/items`] as const;
 
 export type GetItemsQueryResult = NonNullable<Awaited<ReturnType<typeof getItems>>>
 
@@ -129,7 +129,7 @@ export const getGetMeItemIndexUrl = (params?: GetMeItemIndexParams,) => {
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `http://localhost:8085/items/index?${stringifiedParams}` : `http://localhost:8085/items/index`
+  return stringifiedParams.length > 0 ? `${process.env.NEXT_PUBLIC_API_URL}/items/index?${stringifiedParams}` : `${process.env.NEXT_PUBLIC_API_URL}/items/index`
 }
 
 /**
@@ -156,7 +156,7 @@ export const getMeItemIndex = async (params?: GetMeItemIndexParams, options?: Re
 
 
 
-export const getGetMeItemIndexKey = (params?: GetMeItemIndexParams,) => [`http://localhost:8085/items/index`, ...(params ? [params]: [])] as const;
+export const getGetMeItemIndexKey = (params?: GetMeItemIndexParams,) => [`${process.env.NEXT_PUBLIC_API_URL}/items/index`, ...(params ? [params]: [])] as const;
 
 export type GetMeItemIndexQueryResult = NonNullable<Awaited<ReturnType<typeof getMeItemIndex>>>
 
@@ -203,7 +203,7 @@ export const getGetItemSummariesUrl = () => {
 
 
 
-  return `http://localhost:8085/items/summaries`
+  return `${process.env.NEXT_PUBLIC_API_URL}/items/summaries`
 }
 
 /**
@@ -233,7 +233,7 @@ export const getItemSummaries = async ( options?: RequestInit): Promise<getItemS
 
 
 
-export const getGetItemSummariesKey = () => [`http://localhost:8085/items/summaries`] as const;
+export const getGetItemSummariesKey = () => [`${process.env.NEXT_PUBLIC_API_URL}/items/summaries`] as const;
 
 export type GetItemSummariesQueryResult = NonNullable<Awaited<ReturnType<typeof getItemSummaries>>>
 

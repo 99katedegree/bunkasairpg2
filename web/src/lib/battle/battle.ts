@@ -57,7 +57,7 @@ export const getStartBattleUrl = () => {
 
 
 
-  return `http://localhost:8085/battles/start`
+  return `${process.env.NEXT_PUBLIC_API_URL}/battles/start`
 }
 
 /**
@@ -89,7 +89,7 @@ export const getStartBattleMutationFetcher = ( options?: RequestInit) => {
     return startBattle(arg, options);
   }
 }
-export const getStartBattleMutationKey = () => [`http://localhost:8085/battles/start`] as const;
+export const getStartBattleMutationKey = () => [`${process.env.NEXT_PUBLIC_API_URL}/battles/start`] as const;
 
 export type StartBattleMutationResult = NonNullable<Awaited<ReturnType<typeof startBattle>>>
 
@@ -141,7 +141,7 @@ export const getFinishBattleUrl = () => {
 
 
 
-  return `http://localhost:8085/battles/finish`
+  return `${process.env.NEXT_PUBLIC_API_URL}/battles/finish`
 }
 
 /**
@@ -173,7 +173,7 @@ export const getFinishBattleMutationFetcher = ( options?: RequestInit) => {
     return finishBattle(arg, options);
   }
 }
-export const getFinishBattleMutationKey = () => [`http://localhost:8085/battles/finish`] as const;
+export const getFinishBattleMutationKey = () => [`${process.env.NEXT_PUBLIC_API_URL}/battles/finish`] as const;
 
 export type FinishBattleMutationResult = NonNullable<Awaited<ReturnType<typeof finishBattle>>>
 

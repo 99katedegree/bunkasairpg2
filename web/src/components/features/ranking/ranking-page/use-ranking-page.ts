@@ -53,6 +53,8 @@ export function useRankingPage() {
   const [loadingCollectedRanking, setLoadingCollectedRanking] = useState(true);
 
   useEffect(() => {
+    // 生成された API クライアントと同じベースURLを使う。
+    // next.config.ts で既定値を入れてあるので undefined にはならない。
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
     fetchWithAuth<UserClearRankingResponse>(`${apiUrl}/user/clear-ranking`)
